@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">-->
+  <title>Covestro – Hauptversammlung 2026</title>
+  <style>
+     * { margin: 0; padding: 0; box-sizing: border-box; }
+     body {
+       font-family: 'Segoe UI', Arial, sans-serif;
+       background: #f4f6f9;
+       color: #1a1a1a;
+       min-height: 100vh;
+       font-size: 1rem;
+       line-height: 1.6;
+       transition: font-size 0.3s, line-height 0.3s;
+     }
+
+     body.low-vision { font-size: 1.2rem; line-height: 1.8; }
+     body.low-vision .doc-title     { font-size: 1.1rem; margin-bottom: 6px; }
+     body.low-vision .doc-meta      { font-size: 0.95rem; color: #595959; }
+     body.low-vision header h1      { font-size: 1.6rem; }
+     body.low-vision .lang-btn      { padding: 10px 22px; font-size: 1rem; }
+     body.low-vision #pdf-close-btn { padding: 14px 28px; font-size: 1rem; }
+     body.low-vision .doc-row       { padding: 20px; min-height: 60px; }
+     body.low-vision .doc-list      { gap: 16px; }
+     body.low-vision .doc-icon      { width: 52px; height: 52px; border-radius: 10px; }
+     body.low-vision .doc-icon svg  { width: 28px; height: 28px; }
+     body.low-vision footer         { color: #aaaaaa; }
+     body.low-vision #pdf-page-info { color: #aaaaaa; }
+     body.color-blind { font-size: 1.2rem; line-height: 1.8; }
+     body.color-blind header                { background: #1a1a1a; border-bottom: 4px solid #ff6600; }
+     body.color-blind .lang-btn             { border-color: #ff6600; color: white; padding: 10px 22px; font-size: 1rem; }
+     body.color-blind .lang-btn.active,
+     body.color-blind .lang-btn:hover       { background: #ff6600; color: white; text-decoration: underline; font-weight: 800; }
+     body.color-blind .a11y-btn             { border-color: #ff6600; color: white; }
+     body.color-blind .a11y-btn.active      { background: #ff6600; color: white; }
+     body.color-blind .a11y-btn:hover       { background: rgba(255,102,0,0.3); }
+     body.color-blind .doc-row              { padding: 20px; min-height: 60px; border-left: 5px solid transparent; }
+     body.color-blind .doc-row:hover        { background: #fff3e0; border-left-color: #ff6600; }
+     body.color-blind .doc-row:focus        { background: #fff3e0; border-left-color: #ff6600; outline: 3px solid #ff6600; }
+     body.color-blind .doc-icon             { background: #1a1a1a; width: 52px; height: 52px; border-radius: 10px; }
+     body.color-blind .doc-icon svg         { width: 28px; height: 28px; }
+     body.color-blind .doc-arrow            { color: #1a1a1a; font-weight: 900; font-size: 1.6rem; }
+     body.color-blind .doc-title            { font-size: 1.1rem; margin-bottom: 6px; color: #1a1a1a; font-weight: 700; }
+     body.color-blind .doc-meta             { font-size: 0.95rem; color: #444444; }
+     body.color-blind header h1             { font-size: 1.6rem; }
+     body.color-blind .doc-group-header     { background: #e0e0e0; border-left: 6px solid #1a1a1a; color: #1a1a1a; }
+     body.color-blind .badge                { background: #ff6600; color: white; }
+     body.color-blind #pdf-close-btn        { background: #1a1a1a; border: 2px solid #ff6600; padding: 14px 28px; font-size: 1rem; }
+     body.color-blind #pdf-close-btn:hover  { background: #333333; }
+     body.color-blind #pdf-page-info        { color: #cccccc; }
+     body.color-blind footer                { color: #cccccc; border-top: 2px solid #ff6600; }
+     body.color-blind footer span           { color: #ff6600; }
+     body.color-blind .doc-item:hover       { box-shadow: 0 4px 16px rgba(255,102,0,0.25); }
+     header {
+       background: #000000; color: white; padding: 18px 40px;
+       display: flex; align-items: center; justify-content: space-between;
+       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+       position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+       transition: background 0.3s;
+     }
+     header h1 { font-size: 1.3rem; font-weight: 600; letter-spacing: 0.02em; transition: font-size 0.3s; }
+ 	.header-right {
+ 	  display: flex;
+ 	  align-items: center;
+ 	}
+ 	.header-controls {
+ 	  display: flex;
+ 	  flex-direction: column;
+ 	  align-items: flex-end;
+ 	  gap: 5px;
+ 	}
+ 	.lang-switcher {
+ 	  display: flex;
+ 	  gap: 8px;
+ 	  align-items: center;
+ 	  padding-bottom: 5px;
+ 	  border-bottom: 1px solid rgba(255,255,255,0.2);
+ 	  width: 100%;
+ 	  justify-content: flex-end;
+ 	}
+ 	.a11y-switcher {
+ 	  display: flex;
+ 	  gap: 4px;
+ 	  align-items: center;
+ 	}
+
+ 	.a11y-btn {
+ 	  background: transparent; border: 2px solid white; color: white;
+ 	  padding: 5px 11px; border-radius: 20px; cursor: pointer;
+ 	  font-size: 0.82rem; font-weight: 600; transition: all 0.2s; white-space: nowrap;
+ 	}
+ 	.a11y-btn:hover  { background: rgba(255,255,255,0.2); }
+ 	.a11y-btn.active { background: white; color: #009fe4; }
+ 	.a11y-btn:focus  { outline: 3px solid #ff6600; outline-offset: 3px; }
+ 	.lang-btn {
+ 	  background: transparent; border: 2px solid white; color: white;
+ 	  padding: 5px 14px; border-radius: 20px; cursor: pointer;
+ 	  font-size: 0.82rem; font-weight: 600; transition: all 0.2s; letter-spacing: 0.05em;
+ 	}
+ 	.lang-btn.active, .lang-btn:hover { background: white; color: #009fe4; }
+ 	.lang-btn:focus { outline: 3px solid #ff6600; outline-offset: 3px; }
+     main { max-width: 1100px; margin: 40px auto; padding: 0 24px 80px; padding-top: 90px; }
+     .intro {
+       margin-bottom: 32px; position: sticky; top: 76px; z-index: 400;
+       background: #f4f6f9;
+       padding-top: 0px;
+       padding-bottom: 0px;
+     }
+     .intro h2 { margin-bottom: 1px; font-size: 1.2rem; color: #1a1a1a; }
+     .intro p   { color: #555; font-size: 0.95rem; line-height: 1.6; }
+     .doc-list { display: flex; flex-direction: column; gap: 6px; transition: gap 0.3s; }
+     .doc-item {
+ 	  background: white; border-radius: 10px;
+ 	  box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+ 	  transition: box-shadow 0.2s, transform 0.2s;
+ 	}
+ 	.doc-item:hover {
+ 	  box-shadow: 0 6px 20px rgba(0,159,228,0.22);
+ 	  transform: translateY(-1px);
+ 	}
+     .doc-group-header {
+       background: #e8f6fd; border-left: 4px solid #009fe4;
+       padding: 14px 20px; font-weight: 700; font-size: 0.95rem; color: #007ab8;
+       display: flex; align-items: center; gap: 10px;
+       transition: background 0.3s, border-left-color 0.3s, color 0.3s;
+     }
+     .doc-group-header .badge {
+ 	  background: #009fe4; color: white; border-radius: 12px;
+ 	  padding: 3px 12px; font-size: 0.75rem; font-weight: 700;
+ 	  letter-spacing: 0.04em; transition: background 0.3s;
+ 	}
+     .doc-sub-list { display: flex; flex-direction: column; }
+     .doc-sub-list .doc-row { border-top: 1px solid #f0f0f0; }
+     .doc-row {
+       display: flex; align-items: center; padding: 14px 20px; gap: 16px;
+       cursor: pointer; transition: background 0.15s, padding 0.3s, min-height 0.3s;
+       border: none; background: transparent; width: 100%; text-align: left;
+     }
+     .doc-row:hover { background: #f0faff; }
+     .doc-row:focus { background: #f0faff; outline: 3px solid #ff6600; outline-offset: -3px; }
+     .doc-icon {
+       flex-shrink: 0; width: 38px; height: 38px; background: #009fe4;
+       border-radius: 8px; display: flex; align-items: center; justify-content: center;
+       transition: width 0.3s, height 0.3s, background 0.3s;
+     }
+     .doc-icon svg { width: 20px; height: 20px; fill: white; transition: width 0.3s, height 0.3s; }
+     .doc-info { flex: 1; }
+     .doc-title { font-weight: 600; font-size: 0.95rem; color: #1a1a1a; margin-bottom: 2px; transition: font-size 0.3s, margin-bottom 0.3s; }
+     .doc-meta  { font-size: 0.78rem; color: #888; transition: font-size 0.3s, color 0.3s; }
+     .doc-arrow { color: #009fe4; font-size: 1.4rem; flex-shrink: 0; transition: color 0.3s; }
+     #pdf-overlay { display: none; position: fixed; inset: 0; background: #1a1a1a; z-index: 1000; flex-direction: column; }
+     #pdf-overlay.active { display: flex; }
+     #pdf-toolbar { background: #222; color: white; padding: 10px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+     #pdf-close-btn {
+       background: #e6007c; border: none; color: white; padding: 8px 20px;
+       border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+       display: flex; align-items: center; gap: 6px;
+       transition: background 0.2s, padding 0.3s, font-size 0.3s;
+     }
+     #pdf-close-btn:hover { background: #c0005e; }
+     #pdf-close-btn:focus { outline: 3px solid #ff6600; outline-offset: 3px; }
+     #pdf-doc-title { font-size: 0.95rem; font-weight: 600; color: #ccc; flex: 1; }
+     #pdf-page-info { font-size: 0.82rem; color: #888; transition: color 0.3s; }
+     #pdf-frame { flex: 1; width: 100%; border: none; }
+     footer {
+       background: #222; color: #888; text-align: center; padding: 16px;
+       font-size: 0.78rem; position: fixed; bottom: 0; width: 100%;
+       transition: color 0.3s, border-top 0.3s;
+     }
+     footer span { color: #009fe4; transition: color 0.3s; }
+     #lv-toast {
+       position: fixed; bottom: 60px; left: 50%;
+       transform: translateX(-50%) translateY(20px);
+       background: #1a1a1a; color: white; padding: 10px 24px;
+       border-radius: 24px; font-size: 0.9rem; font-weight: 600;
+       opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+       z-index: 2000; white-space: nowrap;
+     }
+     #lv-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+     /* Mobile */
+ 	@media (max-width: 600px) {
+ 	  header { padding: 10px 16px; }
+ 	  header h1 { font-size: 0.95rem; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ 	  .a11y-btn { padding: 4px 7px; font-size: 0.72rem; }
+ 	  .lang-btn { padding: 4px 10px; font-size: 0.72rem; }
+ 	  .header-controls { gap: 4px; }
+ 	  main { padding-top: 110px; }
+ }
+  </style>
+</head>
+<body>
+   <header role="banner">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <svg viewBox="0 0 160 36" height="32" xmlns="http://www.w3.org/2000/svg">
+  			<img src="covestro_logo.png" alt="Covestro" style="height:80px; width:auto; margin-left: -160px;" />
+      </svg>
+    </div>
+    	<center>
+      		<h1 id="header-title">Hauptversammlung 2026</br></h1>
+      		<h1 id="intro-title">Unterlagen zur Hauptversammlung</h1>
+      	</center>
+      <div class="header-right">
+  	  <div class="header-controls">
+  	    <nav aria-label="Sprachauswahl">
+  	      <div class="lang-switcher">
+  	        <button class="lang-btn active" onclick="setLang('de')" id="btn-de"
+  	                aria-pressed="true" aria-label="Deutsch auswählen">DE</button>
+  	        <button class="lang-btn" onclick="setLang('en')" id="btn-en"
+  	                aria-pressed="false" aria-label="Select English">EN</button>
+  	      </div>
+  	    </nav>
+  	    <div class="a11y-switcher" role="group" aria-label="Anzeigemodus wählen">
+  	      <button class="a11y-btn active" id="btn-normal" onclick="setMode(0)"
+  	              aria-pressed="true">👁 Normal</button>
+  	      <button class="a11y-btn" id="btn-lv" onclick="setMode(1)"
+  	              aria-pressed="false">🔍 Sehschwäche</button>
+  	      <button class="a11y-btn" id="btn-cb" onclick="setMode(2)"
+  	              aria-pressed="false">🎨 Farbenblind</button>
+  	    </div>
+  	  </div>
+  </div>
+  </header>
+
+  <main id="main-content" role="main">
+
+    <div class="intro">
+      <h2 id="intro-title"></h2>
+      <p id="intro-text">Bitte wählen Sie ein Dokument aus derListe, um es im Vollbild zu öffnen. Zum Schließen kehren Sie mit dem Zurück-Button oder der Taste <kbd>Escape</kbd> zur Übersicht zurück.</p>
+
+    </div>
+    <div class="doc-list" id="doc-list" role="list" aria-label="Dokumentenliste"></div>
+  </main>
+
+  <footer role="contentinfo">
+    <span>Covestro AG</span> &nbsp;·&nbsp;
+    <span id="footer-event">Hauptversammlung 2026</span> &nbsp;·&nbsp;
+    <span id="footer-rights">Alle Rechte vorbehalten</span>
+  </footer>
+
+  <div id="pdf-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="pdf-doc-title" aria-hidden="true">
+    <div id="pdf-toolbar">
+      <button id="pdf-close-btn" onclick="closePDF()">
+        <span aria-hidden="true">&#8592;</span>
+        <span id="close-label">Zurück</span>
+      </button>
+      <div id="pdf-doc-title" aria-live="polite">–</div>
+      <div id="pdf-page-info" aria-live="polite"></div>
+    </div>
+    <iframe id="pdf-frame" src="#page=1&zoom=100" title="Dokumentenansicht" aria-label="PDF-Dokument Vollbildansicht" tabindex="0" >
+      <p>Ihr Browser unterstützt keine eingebetteten PDFs.
+        <a id="pdf-fallback" href="#page=1&zoom=100">Dokument direkt herunterladen</a>
+      </p>
+    </iframe>
+  </div>
+
+  <div id="lv-toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const i18n = {
+      de: {
+        headerTitle:  "Hauptversammlung 2026",
+        introTitle:   "Unterlagen zur Hauptversammlung",
+        introText:    "Bitte wählen Sie ein Dokument aus der Liste, um es im Vollbild zu öffnen. Zum Schließen kehren Sie mit dem Zurück-Button oder der Taste Escape zur Übersicht zurück.",
+        closeLabel:   "Zurück",
+        pages:        "Seiten",
+        approxPages:  "ca.",
+        unknown:      "Seitenanzahl unbekannt",
+        footerEvent:  "Hauptversammlung 2026",
+        footerRights: "Alle Rechte vorbehalten",
+        openDoc:      "Dokument öffnen: ",
+        modeNormal:   "Normal",
+        modeLV:       "Sehschwäche",
+        modeCB:       "Farbenblind",
+        toastNormal:  "Standard-Modus aktiviert",
+        toastLV:      "Sehschwäche-Modus aktiviert",
+        toastCB:      "Farbenblind-Modus aktiviert",
+        btnNormal:    "👁 Normal",
+        btnLV:        "🔍 Sehschwäche",
+        btnCB:        "🎨 Farbenblind"
+      },
+      en: {
+        headerTitle:  "Annual General Meeting 2026",
+        introTitle:   "Documents for the Annual General Meeting",
+        introText:    "Please select a document from the list to open it in full screen. Use the back button or Escape key to return to the overview.",
+        closeLabel:   "Back",
+        pages:        "pages",
+        approxPages:  "approx.",
+        unknown:      "Page count unknown",
+        footerEvent:  "Annual General Meeting 2026</br>hallo",
+        footerRights: "All rights reserved",
+        openDoc:      "Open document: ",
+        modeNormal:   "Normal",
+        modeLV:       "Low Vision",
+        modeCB:       "Color Blind",
+        toastNormal:  "Standard mode activated",
+        toastLV:      "Low vision mode activated",
+        toastCB:      "Color blind mode activated",
+        btnNormal:    "👁 Normal",
+        btnLV:        "🔍 Low Vision",
+        btnCB:        "🎨 Color Blind"
+      }
+    };
+
+    const docs = [
+      { id: "satzung",
+        de: "Satzung Covestro AG",
+        en: "Articles of Association Covestro AG",
+        file_de: "top1/Covestro AG_Satzung DE_10 Dezember 2025.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top1/Covestro AG_AoI EN_10 December 2025.pdf?t=${timestamp}#page=1&zoom=100",
+        pages_de: 11,
+        pages_en: 11
+      },
+      { id: "jahresabschluss",
+        de: "Jahresabschluss Covestro AG 2025",
+        en: "Annual Financial Statements Covestro AG 2025",
+        file_de: "top2/Covestro_AG_Jahresabschluss_2025.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top2/Covestro_AG_Financial_statements_2025.pdf?t=${timestamp}#page=1&zoom=100",
+        pages_de: 56,
+        pages_en: 56
+      },
+      { id: "geschaeftsbericht",
+        de: "Geschäftsbericht 2025",
+        en: "Annual Report 2025",
+        file_de: "top3/Covestro_Geschaeftsbericht_2025.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top3/Covestro_Annual_Report_2025.pdf?t=${timestamp}#page=1&zoom=100",
+        pages_de: 367,
+        pages_en: 349
+      },
+      { id: "uebernahme",
+        de: "Übernahmerelevante Angaben",
+        en: "Takeover-Relevant Disclosures",
+        file_de: "top4/Covestro_HV_2026_Bericht_zu_uebernahmerelevanten_Angaben.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top4/Covestro_AGM_2026_Report_on_takeover_relevant_information.pdf?t=${timestamp}#page=1&zoom=100",
+        pages_de: 5,
+        pages_en: 5
+      },
+      { id: "top6",
+        de: "Zu TOP 6: Vergütungsbericht",
+        en: "Re Agenda Item 6: Remuneration Report",
+        file_de: "top6/HV2026_Covestro_Vergütungsbericht.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top6/AGM2026_Covestro_Compensation_report.pdf?t=${timestamp}#page=1&zoom=100", <!--?v=1#page=1&zoom=100",-->
+        pages_de: 28,
+        pages_en: 29
+      },
+      { id: "top7",
+        de: "Zu TOP 7: Vergütungssystem BoM",
+        en: "Re Agenda Item 7: Remuneration System BoM",
+        file_de: "top7/HV2026_Covestro_Vergütungssystem.pdf?t=${timestamp}#page=1&zoom=100",
+        file_en: "top7/AGM2026_Covestro_Compensation System.pdf?t=${timestamp}#page=1&zoom=100",
+	    pages_de: 10,
+        pages_en: 10
+	  },
+      { id: "top8", type: "group",
+        de: "Zu TOP 8: Squeeze-out Unterlagen",
+        en: "Re Agenda Item 8: Squeeze-out Documents",
+        children: [
+          { id: "top8a",
+            de: "Entwurf des Übertragungsbeschlusses",
+            en: "Draft Transfer Resolution",
+            file_de: "top8_1/Covestro_HV2026_Entwurf_des_Uebertragungsbeschlusses.pdf?t=${timestamp}#page=1&zoom=100",
+            file_en: "top8_1/Covestro_AGM2026_ Draft_of_the_squeeze_out_resolution.pdf?t=${timestamp}#page=1&zoom=100",
+            pages_de: 1,
+        	pages_en: 1
+           },
+           { id: "top8b",
+			 de: "Jahresabschluss der Covestro AG 2023",
+			 en: "Annual Financial Statement Covestro AG 2023",
+			 file_de: "top8_2/Covestro_AG_Jahresabschluss_2023.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_2/Covestro_AG_Financial_Statements_2023.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 51,
+        	pages_en: 51
+           },
+           { id: "top8c",
+			 de: "Jahresabschluss der Covestro AG 2024",
+			 en: "Annual Financial Statement Covestro AG 2024",
+			 file_de: "top8_3/Covestro_AG_Jahresabschluss_2024.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_3/Covestro_AG_Financial_statements_2024.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 52,
+        pages_en: 51
+           },
+           { id: "top8d",
+			 de: "Jahresabschluss der Covestro AG 2025",
+			 en: "Annual Financial Statement Covestro AG 2025",
+			 file_de: "top8_4/Covestro_AG_Jahresabschluss_2025.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_4/Covestro_Financial_statements_2025.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 56,
+        pages_en: 56
+           },
+           { id: "top8e",
+			 de: "Geschäftsbericht 2023",
+			 en: "Annual Report 2023",
+			 file_de: "top8_5/Covestro_Geschaeftsbericht_mit_ Lagebericht_2023.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_5/Covestro_Annual_Report_incl_Combined_Management_Report_2023.pdf?t=${timestamp}#page=1&zoom=100",
+             pages: 342,
+        pages_en: 331
+           },
+           { id: "top8f",
+			 de: "Geschäftsbericht 2024",
+			 en: "Annual Report 2024",
+			 file_de: "top8_6/Covestro_Geschaeftsbericht_mit_ Lagebericht_2024.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_6/Covestro_Annual_Report_incl_Combined_Management_Report_2024.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 377,
+             pages_en: 360
+           },
+		   { id: "top8g",
+			 de: "Geschäftsbericht 2025",
+			 en: "Annual Report 2025",
+			 file_de: "top8_7/Covestro_Geschäftsbericht_mit_ Lagebericht_2025.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_7/Covestro_Annual_Report_incl_Combined_Management_Report_2025.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 367,
+        	 pages_en: 349
+           },
+           { id: "top8h",
+			 de: "Zusammengefasster Lagebericht 2023",
+			 en: "Combined Management Report 2023",
+			 file_de: "top8_8/Covestro_Zusammengefasster_Lagebericht_2023.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_8/Covestro_Combined_Management_Report_2023.pdf?t=${timestamp}#page=1&zoom=100",
+			 pages_de: 184,
+        	 pages_en: 177
+           },
+           { id: "top8i",
+			 de: "Zusammengefasster Lagebericht 2024",
+			 en: "Combined Management Report 2024",
+			 file_de: "top8_9/Covestro_Zusammengefasster_Lagebericht_2024.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_9/Covestro_Combined_Management_Report_2024.pdf?t=${timestamp}#page=1&zoom=100",
+			 pages_de: 200,
+        	 pages_en: 189
+           },
+           { id: "top8j",
+			 de: "Zusammengefasster Lagebericht 2025",
+			 en: "TCombined Management Report 2025",
+			 file_de: "top8_10/Covestro_Zusammengefasster_Lagebericht_2025.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_10/Covestro_Combined_Management_Report_2025.pdf?t=${timestamp}#page=1&zoom=100",
+			 pages_de: 201,
+        	 pages_en: 188
+           },
+		   { id: "top8k",
+			 de: "Übertragungsbericht XRG P.J.S.C.",
+			 en: "Transfer Report XRG P.J.S.C.",
+			 file_de: "top8_11/Covestro_HV2026_Uebertragungsbericht.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_11/Covestro_AGM_2026_Transfer_Report.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 253,
+             pages_en: 222
+           },
+           { id: "top8l",
+			 de: "Bericht des gerichtlich bestellten sachverständigen Prüfers IVA VALUATION & ADVISORY AG, Wirtschaftsprüfungsgesellschaft",
+			 en: "Report of the court-appointed expert auditor IVA VALUATION & ADVISORY AG, Wirtschaftsprüfungsgesellschaft",
+			 file_de: "top8_12/Covestro_HV_20262_IVA-Pruefungsbericht.pdf?t=${timestamp}#page=1&zoom=100",
+			 file_en: "top8_12/Covestro AG_IVA-Audit_Report.pdf?t=${timestamp}#page=1&zoom=100",
+             pages_de: 228,
+             pages_en: 218
+           },
+        ]
+      }
+    ];
+
+    const timestamp = new Date().getTime();
+
+    let currentMode = 0;
+    let currentLang = 'de';
+    let lastFocus= null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.body.classList.remove('low-vision', 'color-blind');
+      if (currentMode === 1) document.body.classList.add('low-vision');
+      if (currentMode === 2) document.body.classList.add('color-blind');
+
+      document.getElementById('btn-normal').classList.toggle('active', mode === 0);
+      document.getElementById('btn-lv').classList.toggle('active', mode === 1);
+      document.getElementById('btn-cb').classList.toggle('active', mode === 2);
+      document.getElementById('btn-normal').setAttribute('aria-pressed', mode === 0 ? 'true' : 'false');
+      document.getElementById('btn-lv').setAttribute('aria-pressed', mode === 1 ? 'true' : 'false');
+      document.getElementById('btn-cb').setAttribute('aria-pressed', mode === 2 ? 'true' : 'false');
+
+      const t = i18n[currentLang];
+      const toasts = [t.toastNormal, t.toastLV, t.toastCB];
+      showToast(toasts[mode]);
+      localStorage.setItem('a11y-mode', mode);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('lv-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 2500);
+    }
+<!--
+    function getMetaText(pages, t) {
+      if (pages === null || pages === undefined) return t.unknown;
+      if (typeof pages === 'string' && pages.startsWith('approx:')) {
+        return t.approxPages + ' ' + pages.split(':')[1] + ' ' + t.pages;
+      }
+      return pages + ' ' + t.pages;
+    }
+-->
+	function getMetaText(doc, t) {
+	  const pages = doc['pages_' + currentLang] !== undefined
+		? doc['pages_' + currentLang]
+		: doc.pages;
+	  if (pages === null || pages === undefined) return t.unknown;
+	  if (typeof pages === 'string' && pages.startsWith('approx:')) {
+		return t.approxPages + ' ' + pages.split(':')[1] + ' ' + t.pages;
+	  }
+	  return pages + ' ' + t.pages;
+	}
+
+
+
+    function createDocRow(doc, t, isSub) {
+      const file     = doc['file_' + currentLang] || doc.file;
+      <!-- const metaText = getMetaText(doc.pages, t); -->
+      const metaText = getMetaText(doc, t);
+      const label    = t.openDoc + doc[currentLang] + ', ' + metaText;
+      const row      = document.createElement('button');
+      row.className  = 'doc-row';
+      row.setAttribute('aria-label', label);
+      row.setAttribute('type', 'button');
+      if (isSub) row.style.paddingLeft = '36px';
+      row.innerHTML =
+        '<div class="doc-icon" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+            '<path d="M6 2C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20' +
+                     'V8L14 2H6ZM13 3.5L18.5 9H13V3.5ZM8 13H16V15H8V13Z' +
+                     'M8 9H11V11H8V9ZM8 17H16V19H8V17Z"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="doc-info">' +
+          '<div class="doc-title">' + doc[currentLang] + '</div>' +
+          '<div class="doc-meta">'  + metaText + '</div>' +
+        '</div>' +
+        '<span class="doc-arrow" aria-hidden="true">&#8250;</span>';
+      row.addEventListener('click', function() {
+        openPDF(file, doc[currentLang], metaText, row);
+      });
+      return row;
+    }
+
+    function renderDocs() {
+      const t         = i18n[currentLang];
+      const container = document.getElementById('doc-list');
+      container.innerHTML = '';
+      docs.forEach(function(doc) {
+        if (doc.type === 'group') {
+          const card = document.createElement('div');
+          card.className = 'doc-item';
+          card.setAttribute('role', 'listitem');
+          const groupHeader = document.createElement('div');
+          groupHeader.className = 'doc-group-header';
+          groupHeader.setAttribute('role', 'heading');
+          groupHeader.setAttribute('aria-level', '3');
+          groupHeader.innerHTML =
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+                 'xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+              '<path d="M3 7C3 5.9 3.9 5 5 5H19C20.1 5 21 5.9 21 7V17C21 18.1 20.1 19 19 ' +
+                       '19H5C3.9 19 3 18.1 3 17V7Z" stroke="#007ab8" stroke-width="2"/>' +
+              '<path d="M3 9H21" stroke="#007ab8" stroke-width="2"/>' +
+            '</svg>' +
+            '<span>' + doc[currentLang] + '</span>' +
+            '<span class="badge" aria-label="Tagesordnungspunkt 8">📋 TOP 8</span>';
+          card.appendChild(groupHeader);
+          const subList = document.createElement('div');
+          subList.className = 'doc-sub-list';
+          subList.setAttribute('role', 'list');
+          subList.setAttribute('aria-label', doc[currentLang]);
+          doc.children.forEach(function(child) {
+            const li = document.createElement('div');
+            li.setAttribute('role', 'listitem');
+            li.appendChild(createDocRow(child, t, true));
+            subList.appendChild(li);
+          });
+          card.appendChild(subList);
+          container.appendChild(card);
+        } else {
+          const card = document.createElement('div');
+          card.className = 'doc-item';
+          card.setAttribute('role', 'listitem');
+          card.appendChild(createDocRow(doc, t, false));
+          container.appendChild(card);
+        }
+      });
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      const t     = i18n[lang];
+      document.getElementById('btn-de').setAttribute('aria-pressed', lang === 'de' ? 'true' : 'false');
+      document.getElementById('btn-en').setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+      document.getElementById('btn-de').classList.toggle('active', lang === 'de');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('header-title').textContent  = t.headerTitle;
+      document.getElementById('intro-title').textContent   = t.introTitle;
+      document.getElementById('intro-text').textContent    = t.introText;
+      document.getElementById('close-label').textContent   = t.closeLabel;
+      document.getElementById('footer-event').textContent  = t.footerEvent;
+      document.getElementById('footer-rights').textContent = t.footerRights;
+      document.getElementById('btn-normal').textContent    = t.btnNormal;
+      document.getElementById('btn-lv').textContent        = t.btnLV;
+      document.getElementById('btn-cb').textContent        = t.btnCB;
+      document.documentElement.lang = lang;
+      renderDocs();
+    }
+
+    function openPDF(file, title, meta, triggerEl) {
+      lastFocus      = triggerEl;
+      const overlay  = document.getElementById('pdf-overlay');
+      const fallback = document.getElementById('pdf-fallback');
+      document.getElementById('pdf-frame').src             = file + '#toolbar=0&page=1';
+      document.getElementById('pdf-doc-title').textContent = title;
+      document.getElementById('pdf-page-info').textContent = meta;
+      if (fallback)fallback.href = file;
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('pdf-close-btn').focus();
+      overlay.addEventListener('keydown', trapFocus);
+    }
+
+    function closePDF() {
+      const overlay = document.getElementById('pdf-overlay');
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.getElementById('pdf-frame').src = '';
+      document.body.style.overflow = '';
+      overlay.removeEventListener('keydown', trapFocus);
+      if (lastFocus) lastFocus.focus();
+    }
+
+    function trapFocus(e) {
+      if (e.key !== 'Tab') return;
+      const overlay   = document.getElementById('pdf-overlay');
+      const focusable = overlay.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last  = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' &&
+          document.getElementById('pdf-overlay').classList.contains('active')) {
+        closePDF();
+      }
+    });
+
+    document.addEventListener('touchstart', function(e) {
+	  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+
+
+    (function init() {
+      const saved = localStorage.getItem('a11y-mode');
+      if (saved !== null) {
+        currentMode = parseInt(saved, 10);
+        if (currentMode === 1) document.body.classList.add('low-vision');
+        if (currentMode === 2) document.body.classList.add('color-blind');
+        document.getElementById('btn-normal').classList.toggle('active', currentMode === 0);
+        document.getElementById('btn-lv').classList.toggle('active', currentMode === 1);
+        document.getElementById('btn-cb').classList.toggle('active', currentMode === 2);
+        document.getElementById('btn-normal').setAttribute('aria-pressed', currentMode === 0 ? 'true' : 'false');
+        document.getElementById('btn-lv').setAttribute('aria-pressed', currentMode === 1 ? 'true' : 'false');
+        document.getElementById('btn-cb').setAttribute('aria-pressed', currentMode === 2 ? 'true' : 'false');
+      }
+      renderDocs();
+    })();
+
+  </script>
+</body>
+</html>
