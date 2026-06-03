@@ -55,6 +55,7 @@
   <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">Hover fuer Details - Zeitbereich 06:00-22:00 Uhr</p>
 </div>
 
+<!-- SCHRITT 1: log und initApp zuerst definieren -->
 <script>
 function log(msg) {
   var box = document.getElementById("debug-box");
@@ -65,12 +66,26 @@ function log(msg) {
   }
   console.log(msg);
 }
+
+function initApp() {
+  log("initApp aufgerufen - warte auf Hauptscript...");
+  setTimeout(function() {
+    if (typeof msal !== "undefined") {
+      startMsal();
+    } else {
+      log("FEHLER: msal Objekt nicht verfuegbar!");
+    }
+  }, 100);
+}
 </script>
+
+<!-- SCHRITT 2: CDN Scripts laden -->
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" onload="log('MSAL geladen')" onerror="log('FEHLER: MSAL nicht geladen')"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega@5" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6" onload="log('VegaEmbed geladen');initApp()" onerror="log('FEHLER: VegaEmbed nicht geladen')"></script>
 
+<!-- SCHRITT 3: Hauptcode -->
 <script>
 var CONFIG = {
   clientId: "01c79863-1144-49d0-8bd4-59c8692b7391",
@@ -93,18 +108,8 @@ var msalInstance = null;
 var currentAccount = null;
 var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 
-
-function log(msg) {
-  var box = document.getElementById("debug-box");
-  if (box) {
-    var time = new Date().toLocaleTimeString("de-DE");
-    box.textContent += "\n[" + time + "] " + msg;
-    box.scrollTop = box.scrollHeight;
-  }
-  console.log(msg);
-}
-
-async function initApp() {
+async```javascript
+function startMsal() {
   try {
     log("Erstelle MSAL-Instanz...");
     msalInstance = new msal.PublicClientApplication({
@@ -120,58 +125,66 @@ async function initApp() {
     });
 
     log("Initialisiere MSAL...");
-    await msalInstance.initialize();
-    log("MSAL bereit. Pruefe Redirect...");
+    msalInstance.initialize().then(function() {
+      log("MSAL bereit. Pruefe Redirect...");
 
-    var redirectResponse = await msalInstance.handleRedirectPromise();
-    if (redirectResponse) {
-      log("Redirect-Login: " + redirectResponse.account.username);
-      onSignedIn(redirectResponse.account);
-      return;
-    }
+      msalInstance.handleRedirectPromise().then(function(redirectResponse) {
+        if (redirectResponse) {
+          log("Redirect-Login: " + redirectResponse.account.username);
+          onSignedIn(redirectResponse.account);
+          return;
+        }
 
-    var accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      log("Bestehender Account: " + accounts[0].username);
-      onSignedIn(accounts[0]);
-      return;
-    }
+        var accounts = msalInstance.getAllAccounts();
+        if (accounts.length > 0) {
+          log("Bestehender Account: " + accounts[0].username);
+          onSignedIn(accounts[0]);
+          return;
+        }
 
-    log("Bereit - bitte anmelden.");
-    var btn = document.getElementById("login-btn");
-    btn.disabled = false;
-    btn.textContent = "Mit Microsoft anmelden";
+        log("Bereit - bitte anmelden.");
+        var btn = document.getElementById("login-btn");
+        btn.disabled = false;
+        btn.textContent = "Mit Microsoft anmelden";
+
+      }).catch(function(e) {
+        log("handleRedirectPromise Fehler: " + e.message);
+      });
+
+    }).catch(function(e) {
+      log("Initialize Fehler: " + e.message);
+      var btn = document.getElementById("login-btn");
+      btn.disabled = false;
+      btn.textContent = "Fehler - Seite neu laden";
+    });
 
   } catch (e) {
-    log("Init-Fehler: " + e.message);
+    log("startMsal Fehler: " + e.message);
     var btn = document.getElementById("login-btn");
     btn.disabled = false;
     btn.textContent = "Fehler - Seite neu laden";
   }
 }
 
-async function signIn() {
+function signIn() {
   if (!msalInstance) { log("MSAL noch nicht bereit!"); return; }
   var btn = document.getElementById("login-btn");
   btn.disabled = true;
   btn.textContent = "Anmeldung laeuft...";
   log("Login gestartet...");
-  try {
-    log("Versuche Popup...");
-    var response = await msalInstance.loginPopup({ scopes: scopes, prompt: "select_account" });
+
+  msalInstance.loginPopup({ scopes: scopes, prompt: "select_account" }).then(function(response) {
     log("Popup-Login OK: " + response.account.username);
     onSignedIn(response.account);
-  } catch (popupErr) {
+  }).catch(function(popupErr) {
     log("Popup fehlgeschlagen: " + popupErr.errorCode + " - " + popupErr.message);
     log("Versuche Redirect...");
-    try {
-      await msalInstance.loginRedirect({ scopes: scopes, prompt: "select_account" });
-    } catch (redirectErr) {
+    msalInstance.loginRedirect({ scopes: scopes, prompt: "select_account" }).catch(function(redirectErr) {
       log("Redirect fehlgeschlagen: " + redirectErr.message);
       btn.disabled = false;
       btn.textContent = "Mit Microsoft anmelden";
-    }
-  }
+    });
+  });
 }
 
 function onSignedIn(account) {
@@ -188,15 +201,13 @@ function signOut() {
     .catch(function() { msalInstance.logoutRedirect({ account: currentAccount }); });
 }
 
-async function getToken() {
-  try {
-    var resp = await msalInstance.acquireTokenSilent({ scopes: scopes, account: currentAccount });
-    return resp.accessToken;
-  } catch (e) {
-    log("Silent token fehlgeschlagen: " + e.message);
-    var resp = await msalInstance.acquireTokenPopup({ scopes: scopes });
-    return resp.accessToken;
-  }
+function getToken() {
+  return msalInstance.acquireTokenSilent({ scopes: scopes, account: currentAccount })
+    .catch(function(e) {
+      log("Silent token fehlgeschlagen: " + e.message);
+      return msalInstance.acquireTokenPopup({ scopes: scopes });
+    })
+    .then(function(resp) { return resp.accessToken; });
 }
 
 function goToday() {
@@ -219,7 +230,7 @@ function formatDateLabel(dateStr) {
   });
 }
 
-async function fetchRoomEvents(token, roomEmail, dateStr) {
+function fetchRoomEvents(token, roomEmail, dateStr) {
   var startLocal = new Date(dateStr + "T06:00:00");
   var endLocal = new Date(dateStr + "T22:00:00");
   var url = "https://graph.microsoft.com/v1.0/users/" + encodeURIComponent(roomEmail) + "/calendar/calendarView"
@@ -227,55 +238,71 @@ async function fetchRoomEvents(token, roomEmail, dateStr) {
     + "&endDateTime=" + endLocal.toISOString()
     + "&$select=subject,start,end,organizer"
     + "&$top=50";
-  var resp = await fetch(url, { headers: { Authorization: "Bearer " + token } });
-  if (resp.status === 403) { log("403 Kein Zugriff: " + roomEmail); return []; }
-  if (resp.status === 404) { log("404 Nicht gefunden: " + roomEmail); return []; }
-  if (!resp.ok) {
-    var txt = await resp.text();
-    log(resp.status + " bei " + roomEmail + ": " + txt.substring(0, 200));
-    return [];
-  }
-  var data = await resp.json();
-  log(roomEmail + ": " + data.value.length + " Termin(e)");
-  return data.value || [];
+
+  return fetch(url, { headers: { Authorization: "Bearer " + token } })
+    .then(function(resp) {
+      if (resp.status === 403) { log("403 Kein Zugriff: " + roomEmail); return []; }
+      if (resp.status === 404) { log("404 Nicht gefunden: " + roomEmail); return []; }
+      if (!resp.ok) {
+        return resp.text().then(function(txt) {
+          log(resp.status + " bei " + roomEmail + ": " + txt.substring(0, 200));
+          return [];
+        });
+      }
+      return resp.json().then(function(data) {
+        log(roomEmail + ": " + data.value.length + " Termin(e)");
+        return data.value || [];
+      });
+    })
+    .catch(function(e) {
+      log("Fetch Fehler bei " + roomEmail + ": " + e.message);
+      return [];
+    });
 }
 
-async function loadBookings() {
+function loadBookings() {
   var dateStr = document.getElementById("datePicker").value;
   if (!dateStr) return;
   setStatus("Lade Buchungen fuer " + formatDateLabel(dateStr) + " ...", "info");
-  try {
-    var token = await getToken();
+
+  getToken().then(function(token) {
     var allEvents = [];
-    await Promise.all(CONFIG.rooms.map(async function(room) {
-      var events = await fetchRoomEvents(token, room.email, dateStr);
-      events.forEach(function(ev) {
-        var startH = isoToLocalHours(ev.start.dateTime);
-        var endH = isoToLocalHours(ev.end.dateTime);
-        allEvents.push({
-          room: room.name,
-          subject: ev.subject || "(kein Titel)",
-          organizer: (ev.organizer && ev.organizer.emailAddress)
-            ? (ev.organizer.emailAddress.name || ev.organizer.emailAddress.address)
-            : "-",
-          start: startH,
-          end: endH,
-          startLabel: hoursToTime(startH),
-          endLabel: hoursToTime(endH)
+    var promises = CONFIG.rooms.map(function(room) {
+      return fetchRoomEvents(token, room.email, dateStr).then(function(events) {
+        events.forEach(function(ev) {
+          var startH = isoToLocalHours(ev.start.dateTime);
+          var endH = isoToLocalHours(ev.end.dateTime);
+          allEvents.push({
+            room: room.name,
+            subject: ev.subject || "(kein Titel)",
+            organizer: (ev.organizer && ev.organizer.emailAddress)
+              ? (ev.organizer.emailAddress.name || ev.organizer.emailAddress.address)
+              : "-",
+            start: startH,
+            end: endH,
+            startLabel: hoursToTime(startH),
+            endLabel: hoursToTime(endH)
+          });
         });
       });
-    }));
-    if (allEvents.length === 0) {
-      setStatus("Keine Buchungen am " + formatDateLabel(dateStr) + " gefunden.", "success");
-      document.getElementById("vega-chart").innerHTML = "<p style='text-align:center;padding:60px;color:#aaa;font-size:1.1rem;'>Keine Buchungen fuer diesen Tag.</p>";
-      return;
-    }
-    setStatus(allEvents.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
-    renderChart(allEvents, dateStr);
-  } catch (e) {
+    });
+
+    Promise.all(promises).then(function() {
+      if (allEvents.length === 0) {
+        setStatus("Keine Buchungen am " + formatDateLabel(dateStr) + " gefunden.", "success");
+        document.getElementById("vega-chart").innerHTML =
+          "<p style='text-align:center;padding:60px;color:#aaa;font-size:1.1rem;'>Keine Buchungen fuer diesen Tag.</p>";
+        return;
+      }
+      setStatus(allEvents```javascript
+.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
+      renderChart(allEvents, dateStr);
+    });
+
+  }).catch(function(e) {
     setStatus("Fehler: " + e.message, "error");
     log("loadBookings Fehler: " + e.message);
-  }
+  });
 }
 
 function isoToLocalHours(isoString) {
