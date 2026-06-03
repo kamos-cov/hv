@@ -30,7 +30,7 @@
 <body>
 
 <header>
-  <h1>Building K012 - Raumbuchungen (5. OG) Test12</h1>
+  <h1>Building K012 - Raumbuchungen (5. OG)</h1>
   <span id="user-info"></span>
 </header>
 
@@ -55,6 +55,17 @@
   <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">Hover fuer Details - Zeitbereich 06:00-22:00 Uhr</p>
 </div>
 
+<script>
+function log(msg) {
+  var box = document.getElementById("debug-box");
+  if (box) {
+    var time = new Date().toLocaleTimeString("de-DE");
+    box.textContent += "\n[" + time + "] " + msg;
+    box.scrollTop = box.scrollHeight;
+  }
+  console.log(msg);
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" onload="log('MSAL geladen')" onerror="log('FEHLER: MSAL nicht geladen')"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega@5" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
@@ -81,6 +92,7 @@ var CONFIG = {
 var msalInstance = null;
 var currentAccount = null;
 var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
+
 
 function log(msg) {
   var box = document.getElementById("debug-box");
