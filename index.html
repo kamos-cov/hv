@@ -3,101 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Building K012 – Raumbuchungen</title>
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <title>Building K012 - Raumbuchungen</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6f8; color: #333; }
-    header {
-      background: #009fe4; color: white;
-      padding: 16px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    header { background: #009fe4; color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
     header h1 { font-size: 1.3rem; }
-    button {
-      padding: 7px 16px; background: #009fe4; color: white;
-      border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;
-    }
+    button { padding: 7px 16px; background: #009fe4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
     button:hover { background: #007bbf; }
     button:disabled { background: #aaa; cursor: not-allowed; }
-    button.secondary {
-      background: white; color: #009fe4; border: 1px solid #009fe4;
-    }
+    button.secondary { background: white; color: #009fe4; border: 1px solid #009fe4; }
     button.secondary:hover { background: #e8f5fd; }
-    .toolbar {
-      background: white; padding: 12px 24px;
-      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      border-bottom: 1px solid #e0e0e0;
-    }
+    .toolbar { background: white; padding: 12px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid #e0e0e0; }
     .toolbar label { font-weight: bold; font-size: 0.9rem; }
-    .toolbar input[type="date"] {
-      padding: 6px 10px; border: 1px solid #ccc;
-      border-radius: 4px; font-size: 0.9rem;
-    }
-    #status {
-      padding: 10px 24px; font-size: 0.85rem; color: #666; min-height: 32px;
-    }
-    #status.error   { color: #c0392b; font-weight: bold; }
+    .toolbar input[type="date"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    #status { padding: 10px 24px; font-size: 0.85rem; color: #666; min-height: 32px; }
+    #status.error { color: #c0392b; font-weight: bold; }
     #status.success { color: #27ae60; }
-    #status.info    { color: #2980b9; }
-    #chart-container {
-      padding: 16px 24px; background: white;
-      margin: 16px; border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1); min-height: 400px;
-    }
-    .login-screen {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      height: 60vh; gap: 16px;
-    }
+    #status.info { color: #2980b9; }
+    #chart-container { padding: 16px 24px; background: white; margin: 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); min-height: 400px; }
+    .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; }
     .login-screen p { color: #666; font-size: 1rem; }
-    #debug-box {
-      width: 90%; max-width: 600px;
-      padding: 12px; background: #fff8e1;
-      border: 1px solid #ffe082; border-radius: 4px;
-      font-size: 0.78rem; color: #333; font-family: monospace;
-      white-space: pre-wrap; max-height: 250px; overflow-y: auto;
-    }
+    #debug-box { width: 90%; max-width: 600px; padding: 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px; font-size: 0.78rem; color: #333; font-family: monospace; white-space: pre-wrap; max-height: 250px; overflow-y: auto; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🏢 Building K012 – Raumbuchungen (5. OG)</h1>
+  <h1>Building K012 - Raumbuchungen (5. OG)</h1>
   <span id="user-info"></span>
 </header>
 
 <div id="login-screen" class="login-screen">
   <p>Bitte melde dich mit deinem Covestro-Account an.</p>
-  <button id="login-btn" disabled onclick="signIn()">⏳ Initialisiere...</button>
-  <div id="debug-box">⏳ Warte auf Seitenladung...</div>
+  <button id="login-btn" disabled onclick="signIn()">Laedt...</button>
+  <div id="debug-box">Lade Scripts...</div>
 </div>
 
 <div id="main-content" style="display:none">
   <div class="toolbar">
-    <label for="datePicker">📅 Datum:</label>
+    <label for="datePicker">Datum:</label>
     <input type="date" id="datePicker">
-    <button onclick="loadBookings()">🔄 Laden</button>
+    <button onclick="loadBookings()">Laden</button>
     <button class="secondary" onclick="goToday()">Heute</button>
-    <button class="secondary" onclick="changeDay(-1)">◀ Zurück</button>
-    <button class="secondary" onclick="changeDay(1)">Vor ▶</button>
-    <button class="secondary" onclick="signOut()" style="margin-left:auto">🚪 Abmelden</button>
+    <button class="secondary" onclick="changeDay(-1)">Zurueck</button>
+    <button class="secondary" onclick="changeDay(1)">Vor</button>
+    <button class="secondary" onclick="signOut()" style="margin-left:auto">Abmelden</button>
   </div>
   <div id="status"></div>
   <div id="chart-container"><div id="vega-chart"></div></div>
-  <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">
-    Hover über einen Balken für Details · Zeitbereich: 06:00–22:00 Uhr
-  </p>
+  <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">Hover fuer Details - Zeitbereich 06:00-22:00 Uhr</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" onload="log('MSAL geladen')" onerror="log('FEHLER: MSAL nicht geladen')"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega@5" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6" onload="log('VegaEmbed geladen');initApp()" onerror="log('FEHLER: VegaEmbed nicht geladen')"></script>
+
 <script>
-// ── KONFIGURATION ────────────────────────────────────────────
-const CONFIG = {
-  clientId:    "01c79863-1144-49d0-8bd4-59c8692b7391",
-  tenantId:    "0468bc4a-134c-4fb0-b843-a2a3d583e919",
+var CONFIG = {
+  clientId: "01c79863-1144-49d0-8bd4-59c8692b7391",
+  tenantId: "0468bc4a-134c-4fb0-b843-a2a3d583e919",
   redirectUri: "https://kamos-cov.github.io/hv/",
   rooms: [
     { email: "RES_13900@covestro.com", name: "Raum 0501" },
@@ -108,36 +74,31 @@ const CONFIG = {
     { email: "RES_14173@covestro.com", name: "Raum 0522" },
     { email: "RES_14174@covestro.com", name: "Raum 0530" },
     { email: "RES_14128@covestro.com", name: "Raum 0550" },
-    { email: "RES_14170@covestro.com", name: "Raum 0572" },
+    { email: "RES_14170@covestro.com", name: "Raum 0572" }
   ]
 };
 
-// ── DEBUG ────────────────────────────────────────────────────
+var msalInstance = null;
+var currentAccount = null;
+var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
+
 function log(msg) {
-  const box = document.getElementById("debug-box");
+  var box = document.getElementById("debug-box");
   if (box) {
-    const time = new Date().toLocaleTimeString("de-DE");
-    box.textContent += `\n[${time}] ${msg}`;
+    var time = new Date().toLocaleTimeString("de-DE");
+    box.textContent += "\n[" + time + "] " + msg;
     box.scrollTop = box.scrollHeight;
   }
   console.log(msg);
 }
 
-// ── MSAL ─────────────────────────────────────────────────────
-let msalInstance = null;
-let currentAccount = null;
-const scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
-
-// ── INITIALISIERUNG – wartet bis ALLE Scripts geladen sind ───
-window.addEventListener("load", async function () {
+async function initApp() {
   try {
     log("Erstelle MSAL-Instanz...");
-
     msalInstance = new msal.PublicClientApplication({
       auth: {
-        clientId:    CONFIG.clientId,
-        authority:   `https://login.microsofton```html
-line.com/${CONFIG.tenantId}`,
+        clientId: CONFIG.clientId,
+        authority: "https://login.microsoftonline.com/" + CONFIG.tenantId,
         redirectUri: CONFIG.redirectUri
       },
       cache: {
@@ -146,70 +107,64 @@ line.com/${CONFIG.tenantId}`,
       }
     });
 
-    log("Initialisiere...");
+    log("Initialisiere MSAL...");
     await msalInstance.initialize();
-    log("✅ MSAL bereit. Prüfe Redirect...");
+    log("MSAL bereit. Pruefe Redirect...");
 
-    const redirectResponse = await msalInstance.handleRedirectPromise();
+    var redirectResponse = await msalInstance.handleRedirectPromise();
     if (redirectResponse) {
-      log("✅ Redirect-Login: " + redirectResponse.account.username);
+      log("Redirect-Login: " + redirectResponse.account.username);
       onSignedIn(redirectResponse.account);
       return;
     }
 
-    const accounts = msalInstance.getAllAccounts();
+    var accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
-      log("✅ Bestehender Account: " + accounts[0].username);
+      log("Bestehender Account: " + accounts[0].username);
       onSignedIn(accounts[0]);
       return;
     }
 
-    log("Bereit – bitte anmelden.");
-    const btn = document.getElementById("login-btn");
+    log("Bereit - bitte anmelden.");
+    var btn = document.getElementById("login-btn");
     btn.disabled = false;
-    btn.textContent = "🔐 Mit Microsoft anmelden";
+    btn.textContent = "Mit Microsoft anmelden";
 
   } catch (e) {
-    log("❌ Init-Fehler: " + e.message);
-    const btn = document.getElementById("login-btn");
+    log("Init-Fehler: " + e.message);
+    var btn = document.getElementById("login-btn");
     btn.disabled = false;
-    btn.textContent = "❌ Fehler – Seite neu laden";
+    btn.textContent = "Fehler - Seite neu laden";
   }
-});
+}
 
-// ── LOGIN ─────────────────────────────────────────────────────
 async function signIn() {
-  if (!msalInstance) { log("❌ MSAL noch nicht bereit!"); return; }
-
-  const btn = document.getElementById("login-btn");
+  if (!msalInstance) { log("MSAL noch nicht bereit!"); return; }
+  var btn = document.getElementById("login-btn");
   btn.disabled = true;
-  btn.textContent = "⏳ Anmeldung läuft...";
+  btn.textContent = "Anmeldung laeuft...";
   log("Login gestartet...");
-
   try {
     log("Versuche Popup...");
-    const response = await msalInstance.loginPopup({
-      scopes,
-      prompt: "select_account"
-    });
-    log("✅ Popup-Login OK: " + response.account.username);
+    var response = await msalInstance.loginPopup({ scopes: scopes, prompt: "select_account" });
+    log("Popup-Login OK: " + response.account.username);
     onSignedIn(response.account);
   } catch (popupErr) {
-    log("⚠️ Popup fehlgeschlagen: " + popupErr.errorCode + " – " + popupErr.message);
-    log("Versuche Redirect als Fallback...");
+    log("Popup fehlgeschlagen: " + popupErr.errorCode + " - " + popupErr.message);
+    log("Versuche Redirect...");
     try {
-      await msalInstance.loginRedirect({ scopes, prompt: "select_account" });
+      await msalInstance.loginRedirect({ scopes: scopes, prompt: "select_account" });
     } catch (redirectErr) {
-      log("❌ Redirect fehlgeschlagen: " + redirectErr.message);
+      log("Redirect fehlgeschlagen: " + redirectErr.message);
       btn.disabled = false;
-      btn.textContent = "🔐 Mit Microsoft anmelden";
+      btn.textContent = "Mit Microsoft anmelden";
     }
   }
 }
 
 function onSignedIn(account) {
   currentAccount = account;
-  document.getElementById("user-info").textContent = `👤 ${account.name || account.username}`;
+  document.getElementById("user-info").textContent = account.name || account.username;
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("main-content").style.display = "block";
   goToday();
@@ -217,31 +172,30 @@ function onSignedIn(account) {
 
 function signOut() {
   msalInstance.logoutPopup({ account: currentAccount })
-    .then(() => location.reload())
-    .catch(() => msalInstance.logoutRedirect({ account: currentAccount }));
+    .then(function() { location.reload(); })
+    .catch(function() { msalInstance.logoutRedirect({ account: currentAccount }); });
 }
 
 async function getToken() {
   try {
-    const resp = await msalInstance.acquireTokenSilent({ scopes, account: currentAccount });
+    var resp = await msalInstance.acquireTokenSilent({ scopes: scopes, account: currentAccount });
     return resp.accessToken;
   } catch (e) {
-    log("Silent token fehlgeschlagen → Popup: " + e.message);
-    const resp = await msalInstance.acquireTokenPopup({ scopes });
+    log("Silent token fehlgeschlagen: " + e.message);
+    var resp = await msalInstance.acquireTokenPopup({ scopes: scopes });
     return resp.accessToken;
   }
 }
 
-// ── DATUM ─────────────────────────────────────────────────────
 function goToday() {
-  const today = new Date().toISOString().split("T")[0];
+  var today = new Date().toISOString().split("T")[0];
   document.getElementById("datePicker").value = today;
   loadBookings();
 }
 
 function changeDay(delta) {
-  const picker = document.getElementById("datePicker");
-  const d = new Date(picker.value + "T12:00:00");
+  var picker = document.getElementById("datePicker");
+  var d = new Date(picker.value + "T12:00:00");
   d.setDate(d.getDate() + delta);
   picker.value = d.toISOString().split("T")[0];
   loadBookings();
@@ -253,99 +207,84 @@ function formatDateLabel(dateStr) {
   });
 }
 
-// ── GRAPH API ─────────────────────────────────────────────────
 async function fetchRoomEvents(token, roomEmail, dateStr) {
-  const startLocal = new Date(`${dateStr}T06:00:00`);
-  const endLocal   = new Date(`${dateStr}T22:00:00`);
-
-  const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(roomEmail)}/calendar/calendarView`
-    + `?startDateTime=${startLocal.toISOString()}`
-    + `&endDateTime=${endLocal.toISOString()}`
-    + `&$select=subject,start,end,organizer`
-    + `&$top=50`;
-
-  const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  if (resp.status === 403) { log(`⚠️ 403 Kein Zugriff: ${roomEmail}`); return []; }
-  if (resp.status === 404) { log(`⚠️ 404 Nicht gefunden: ${roomEmail}`); return []; }
+  var startLocal = new Date(dateStr + "T06:00:00");
+  var endLocal = new Date(dateStr + "T22:00:00");
+  var url = "https://graph.microsoft.com/v1.0/users/" + encodeURIComponent(roomEmail) + "/calendar/calendarView"
+    + "?startDateTime=" + startLocal.toISOString()
+    + "&endDateTime=" + endLocal.toISOString()
+    + "&$select=subject,start,end,organizer"
+    + "&$top=50";
+  var resp = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+  if (resp.status === 403) { log("403 Kein Zugriff: " + roomEmail); return []; }
+  if (resp.status === 404) { log("404 Nicht gefunden: " + roomEmail); return []; }
   if (!resp.ok) {
-    const txt = await resp.text();
-    log(`⚠️ ${resp.status} bei ${roomEmail}: ${txt.substring(0, 200)}`);
+    var txt = await resp.text();
+    log(resp.status + " bei " + roomEmail + ": " + txt.substring(0, 200));
     return [];
   }
-  const data = await resp.json();
-  log(`✅ ${roomEmail}: ${data.value.length} Termin(e)`);
+  var data = await resp.json();
+  log(roomEmail + ": " + data.value.length + " Termin(e)");
   return data.value || [];
 }
 
-// ── BUCHUNGEN LADEN ───────────────────────────────────────────
 async function loadBookings() {
-  const dateStr = document.getElementById("datePicker").value;
+  var dateStr = document.getElementById("datePicker").value;
   if (!dateStr) return;
-
-  setStatus("⏳ Lade Buchungen für " + formatDateLabel(dateStr) + " ...", "info");
-
+  setStatus("Lade Buchungen fuer " + formatDateLabel(dateStr) + " ...", "info");
   try {
-    const token = await getToken();
-    const allEvents = [];
-
-    await Promise.all(CONFIG.rooms.map(async (room) => {
-      const events = await fetchRoomEvents(token, room.email, dateStr);
-      events.forEach(ev => {
-        const startH = isoToLocalHours(ev.start.dateTime);
-        const endH   = isoToLocalHours(ev.end.dateTime);
+    var token = await getToken();
+    var allEvents = [];
+    await Promise.all(CONFIG.rooms.map(async function(room) {
+      var events = await fetchRoomEvents(token, room.email, dateStr);
+      events.forEach(function(ev) {
+        var startH = isoToLocalHours(ev.start.dateTime);
+        var endH = isoToLocalHours(ev.end.dateTime);
         allEvents.push({
-          room:       room.name,
-          subject:    ev.subject || "(kein Titel)",
-          organizer:  ev.organizer?.emailAddress?.name
-                   || ev.organizer?.emailAddress?.address || "–",
-          start:      startH,
-          end:        endH,
+          room: room.name,
+          subject: ev.subject || "(kein Titel)",
+          organizer: (ev.organizer && ev.organizer.emailAddress)
+            ? (ev.organizer.emailAddress.name || ev.organizer.emailAddress.address)
+            : "-",
+          start: startH,
+          end: endH,
           startLabel: hoursToTime(startH),
-          endLabel:   hoursToTime(endH)
+          endLabel: hoursToTime(endH)
         });
       });
     }));
-
     if (allEvents.length === 0) {
-      setStatus(`Keine Buchungen am ${formatDateLabel(dateStr)} gefunden.`, "success");
-      document.getElementById("vega-chart").innerHTML =
-        `<p style="text-align:center;padding:60px;color:#aaa;font-size:1.1rem;">
-          Keine Buchungen für diesen Tag.</p>`;
+      setStatus("Keine Buchungen am " + formatDateLabel(dateStr) + " gefunden.", "success");
+      document.getElementById("vega-chart").innerHTML = "<p style='text-align:center;padding:60px;color:#aaa;font-size:1.1rem;'>Keine Buchungen fuer diesen Tag.</p>";
       return;
     }
-
-    setStatus(`✅ ${allEvents.length} Buchung(en) geladen – ${formatDateLabel(dateStr)}`, "success");
+    setStatus(allEvents.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
     renderChart(allEvents, dateStr);
-
   } catch (e) {
-    setStatus("❌ Fehler: " + e.message, "error");
-    log("loadBookings Fehler: " + e.stack);
-  }```javascript
+    setStatus("Fehler: " + e.message, "error");
+    log("loadBookings Fehler: " + e.message);
+  }
 }
 
 function isoToLocalHours(isoString) {
-  const d = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
+  var d = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
   return d.getHours() + d.getMinutes() / 60;
 }
 
 function hoursToTime(h) {
-  const hh = Math.floor(h).toString().padStart(2, "0");
-  const mm = Math.round((h % 1) * 60).toString().padStart(2, "0");
-  return `${hh}:${mm}`;
+  var hh = Math.floor(h).toString().padStart(2, "0");
+  var mm = Math.round((h % 1) * 60).toString().padStart(2, "0");
+  return hh + ":" + mm;
 }
 
-// ── CHART ─────────────────────────────────────────────────────
 function renderChart(data, dateStr) {
-  const roomOrder = CONFIG.rooms.map(r => r.name);
-  const today = new Date().toISOString().split("T")[0];
-  const now   = new Date();
-  const nowH  = now.getHours() + now.getMinutes() / 60;
-  const showNowLine = (dateStr === today && nowH >= 6 && nowH <= 22);
+  var roomOrder = CONFIG.rooms.map(function(r) { return r.name; });
+  var today = new Date().toISOString().split("T")[0];
+  var now = new Date();
+  var nowH = now.getHours() + now.getMinutes() / 60;
+  var showNowLine = (dateStr === today && nowH >= 6 && nowH <= 22);
 
-  const barLayer = {
+  var barLayer = {
     mark: { type: "bar", cornerRadius: 3, height: { band: 0.75 } },
     encoding: {
       y: {
@@ -371,16 +310,16 @@ function renderChart(data, dateStr) {
         legend: { title: "Raum", orient: "right", labelFontSize: 11 }
       },
       tooltip: [
-        { field: "room",       type: "nominal", title: "Raum" },
-        { field: "subject",    type: "nominal", title: "Besprechung" },
-        { field: "organizer",  type: "nominal", title: "Organisator" },
+        { field: "room", type: "nominal", title: "Raum" },
+        { field: "subject", type: "nominal", title: "Besprechung" },
+        { field: "organizer", type: "nominal", title: "Organisator" },
         { field: "startLabel", type: "nominal", title: "Start" },
-        { field: "endLabel",   type: "nominal", title: "Ende" }
+        { field: "endLabel", type: "nominal", title: "Ende" }
       ]
     }
   };
 
-  const nowLayer = {
+  var nowLayer = {
     data: { values: [{ now: nowH }] },
     mark: { type: "rule", color: "red", strokeWidth: 2, strokeDash: [4, 3] },
     encoding: {
@@ -389,10 +328,10 @@ function renderChart(data, dateStr) {
     }
   };
 
-  const spec = {
+  var spec = {
     $schema: "https://vega.github.io/schema/vega-lite/v5.json",
     title: {
-      text: `Building K012 – Raumbuchungen – ${formatDateLabel(dateStr)}`,
+      text: "Building K012 - Raumbuchungen - " + formatDateLabel(dateStr),
       fontSize: 15, font: "Arial"
     },
     width: "container",
@@ -407,14 +346,13 @@ function renderChart(data, dateStr) {
   };
 
   vegaEmbed("#vega-chart", spec, { renderer: "svg", actions: false })
-    .catch(err => setStatus("Chart-Fehler: " + err.message, "error"));
+    .catch(function(err) { setStatus("Chart-Fehler: " + err.message, "error"); });
 }
 
-// ── STATUS ────────────────────────────────────────────────────
-function setStatus(msg, type = "") {
-  const el = document.getElementById("status");
+function setStatus(msg, type) {
+  var el = document.getElementById("status");
   el.textContent = msg;
-  el.className = type;
+  el.className = type || "";
 }
 </script>
 </body>
