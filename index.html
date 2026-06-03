@@ -108,8 +108,7 @@ var msalInstance = null;
 var currentAccount = null;
 var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 
-async```javascript
-function startMsal() {
+async function startMsal() {
   try {
     log("Erstelle MSAL-Instanz...");
     msalInstance = new msal.PublicClientApplication({
@@ -294,8 +293,7 @@ function loadBookings() {
           "<p style='text-align:center;padding:60px;color:#aaa;font-size:1.1rem;'>Keine Buchungen fuer diesen Tag.</p>";
         return;
       }
-      setStatus(allEvents```javascript
-.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
+      setStatus(allEvents```javascript.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
       renderChart(allEvents, dateStr);
     });
 
