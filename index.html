@@ -11,92 +11,53 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6f8; color: #333; }
-
     header {
-      background: #009fe4;
-      color: white;
+      background: #009fe4; color: white;
       padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
     header h1 { font-size: 1.3rem; }
-    header span { font-size: 0.9rem; opacity: 0.85; }
-
     .toolbar {
-      background: white;
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      background: white; padding: 12px 24px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
       border-bottom: 1px solid #e0e0e0;
-      flex-wrap: wrap;
     }
     .toolbar label { font-weight: bold; font-size: 0.9rem; }
     .toolbar input[type="date"] {
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 0.9rem;
+      padding: 6px 10px; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 0.9rem;
     }
-    .toolbar button {
-      padding: 7px 18px;
-      background: #009fe4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
+    button {
+      padding: 7px 16px; background: #009fe4; color: white;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;
     }
-    .toolbar button:hover { background: #007bbf; }
-    .toolbar button.secondary {
-      background: white;
-      color: #009fe4;
-      border: 1px solid #009fe4;
+    button:hover { background: #007bbf; }
+    button.secondary {
+      background: white; color: #009fe4; border: 1px solid #009fe4;
     }
-    .toolbar button.secondary:hover { background: #e8f5fd; }
-
+    button.secondary:hover { background: #e8f5fd; }
     #status {
-      padding: 10px 24px;
-      font-size: 0.85rem;
-      color: #666;
-      min-height: 32px;
+      padding: 10px 24px; font-size: 0.85rem; color: #666; min-height: 32px;
     }
-    #status.error { color: #c0392b; }
+    #status.error { color: #c0392b; font-weight: bold; }
     #status.success { color: #27ae60; }
-
+    #status.info { color: #2980b9; }
     #chart-container {
-      padding: 16px 24px;
-      background: white;
-      margin: 16px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      min-height: 400px;
+      padding: 16px 24px; background: white;
+      margin: 16px; border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1); min-height: 400px;
     }
-
-    .legend-info {
-      margin: 0 24px 16px;
-      font-size: 0.8rem;
-      color: #888;
-    }
-
     .login-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 60vh;
-      gap: 16px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 60vh; gap: 16px;
     }
-    .login-screen p { color: #666; }
-    .login-screen button {
-      padding: 12px 32px;
-      background: #009fe4;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
+    .login-screen p { color: #666; font-size: 1rem; }
+    #debug-box {
+      margin: 8px 24px; padding: 10px; background: #fff8e1;
+      border: 1px solid #ffe082; border-radius: 4px;
+      font-size: 0.78rem; color: #555;
+      white-space: pre-wrap; max-height: 200px; overflow-y: auto;
     }
   </style>
 </head>
@@ -110,7 +71,8 @@
 <div id="app">
   <div class="login-screen" id="login-screen">
     <p>Bitte melde dich mit deinem Covestro-Account an.</p>
-    <button onclick="signIn()">🔐 Mit Microsoft anmelden</button>
+    <button id="login-btn">🔐 Mit Microsoft anmelden</button>
+    <div id="debug-box">⏳ Initialisiere...</div>
   </div>
 
   <div id="main-content" style="display:none">
@@ -119,75 +81,147 @@
       <input type="date" id="datePicker">
       <button onclick="loadBookings()">🔄 Laden</button>
       <button class="secondary" onclick="goToday()">Heute</button>
-      <button class="secondary" onclick="changeDay(-1)">◀ Vorheriger Tag</button>
-      <button class="secondary" onclick="changeDay(1)">Nächster Tag ▶</button>
+      <button class="secondary" onclick="changeDay(-1)">◀ Zurück</button>
+      <button class="secondary" onclick="changeDay(1)">Vor ▶</button>
+      <button class="secondary" onclick="signOut()" style="margin-left:auto">🚪 Abmelden</button>
     </div>
-
     <div id="status"></div>
-    <div id="chart-container">
-      <div id="vega-chart"></div>
-    </div>
-    <div class="legend-info">Hover über einen Balken für Details · Zeitbereich: 06:00–22:00 Uhr</div>
+    <div id="chart-container"><div id="vega-chart"></div></div>
+    <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">
+      Hover über einen Balken für Details · Zeitbereich: 06:00–22:00 Uhr
+    </p>
   </div>
 </div>
 
 <script>
 // ============================================================
-// KONFIGURATION – hier anpassen!
+// KONFIGURATION
 // ============================================================
 const CONFIG = {
-  clientId: "01c79863-1144-49d0-8bd4-59c8692b7391",           // App Registration Client ID
-  tenantId: "0468bc4a-134c-4fb0-b843-a2a3d583e919",            // z.B. covestro.com oder GUID
+  clientId:    "01c79863-1144-49d0-8bd4-59c8692b7391",
+  tenantId:    "0468bc4a-134c-4fb0-b843-a2a3d583e919",
+  redirectUri: "https://kamos-cov.github.io/hv/",
   rooms: [
-    { email: "RES_13900@covestro.com",  name: "Raum 0501" },
-    { email: "RES_14172@covestro.com",  name: "Raum 0502" },
-    { email: "RES_14171@covestro.com",  name: "Raum 0509" },
-    { email: "RES_14175@covestro.com",  name: "Raum 0510" },
-    { email: "RES_13844@covestro.com",  name: "Raum 0521" },
-    { email: "RES_14173@covestro.com",  name: "Raum 0522" },
-    { email: "RES_14174@covestro.com",  name: "Raum 0530" },
-    { email: "RES_14128@covestro.com",  name: "Raum 0550" },
-    { email: "RES_14170@covestro.com",  name: "Raum 0572" },
+    { email: "RES_13900@covestro.com", name: "Raum 0501" },
+    { email: "RES_14172@covestro.com", name: "Raum 0502" },
+    { email: "RES_14171@covestro.com", name: "Raum 0509" },
+    { email: "RES_14175@covestro.com", name: "Raum 0510" },
+    { email: "RES_13844@covestro.com", name: "Raum 0521" },
+    { email: "RES_14173@covestro.com", name: "Raum 0522" },
+    { email: "RES_14174@covestro.com", name: "Raum 0530" },
+    { email: "RES_14128@covestro.com", name: "Raum 0550" },
+    { email: "RES_14170@covestro.com", name: "Raum 0572" },
   ]
 };
 
 // ============================================================
-// MSAL```html
+// MSAL SETUP
 // ============================================================
 const msalConfig = {
   auth: {
-    clientId: CONFIG.clientId,
-    authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-    redirectUri: window.location.href.split('?')[0]
+    clientId:    CONFIG.clientId,
+    authority:   `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: CONFIG.redirectUri
   },
-  cache: { cacheLocation: "sessionStorage" }
+  cache: {
+    cacheLocation: "sessionStorage",
+    storeAuthStateInCookie: true
+  }
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-const scopes = ["Calendars.Read", "Calendars.Read.Shared"];
-
+const scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 let currentAccount = null;
 
-async function signIn() {
+function debugLog(msg) {
+  const box = document.getElementById("debug-box");
+  if (box) box.textContent += "\n" + msg;
+  console.log(msg);
+}
+
+// ============================================================
+//```html
+// INITIALISIERUNG – MUSS VOR ALLEM ANDEREN LAUFEN
+// ============================================================
+async function initApp() {
   try {
-    const response = await msalInstance.loginPopup({ scopes });
-    currentAccount = response.account;
-    document.getElementById("user-info").textContent = `👤 ${currentAccount.name}`;
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("main-content").style.display = "block";
-    goToday();
+    debugLog("MSAL wird initialisiert...");
+    await msalInstance.initialize();
+    debugLog("✅ MSAL initialisiert. Redirect URI: " + CONFIG.redirectUri);
+
+    // Redirect-Antwort verarbeiten (nach Login-Redirect)
+    const response = await msalInstance.handleRedirectPromise();
+    if (response) {
+      debugLog("✅ Redirect-Login erfolgreich: " + response.account.username);
+      onSignedIn(response.account);
+      return;
+    }
+
+    // Bereits eingeloggt?
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      debugLog("✅ Bestehender Account: " + accounts[0].username);
+      onSignedIn(accounts[0]);
+      return;
+    }
+
+    // Login-Button aktivieren
+    debugLog("Bereit. Bitte anmelden.");
+    document.getElementById("login-btn").addEventListener("click", signIn);
+    document.getElementById("login-btn").disabled = false;
+
   } catch (e) {
-    setStatus("Anmeldung fehlgeschlagen: " + e.message, "error");
+    debugLog("❌ Init-Fehler: " + e.message);
   }
+}
+
+async function signIn() {
+  const btn = document.getElementById("login-btn");
+  btn.textContent = "⏳ Wird angemeldet...";
+  btn.disabled = true;
+  debugLog("Login gestartet (Popup)...");
+
+  try {
+    const response = await msalInstance.loginPopup({
+      scopes,
+      prompt: "select_account"
+    });
+    debugLog("✅ Popup-Login: " + response.account.username);
+    onSignedIn(response.account);
+  } catch (popupErr) {
+    debugLog("⚠️ Popup fehlgeschlagen (" + popupErr.errorCode + ") → Redirect...");
+    try {
+      await msalInstance.loginRedirect({ scopes, prompt: "select_account" });
+    } catch (redirectErr) {
+      debugLog("❌ Redirect fehlgeschlagen: " + redirectErr.message);
+      btn.textContent = "🔐 Mit Microsoft anmelden";
+      btn.disabled = false;
+    }
+  }
+}
+
+function onSignedIn(account) {
+  currentAccount = account;
+  document.getElementById("user-info").textContent = `👤 ${account.name || account.username}`;
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("main-content").style.display = "block";
+  goToday();
+}
+
+function signOut() {
+  msalInstance.logoutPopup({ account: currentAccount })
+    .then(() => location.reload())
+    .catch(() => msalInstance.logoutRedirect({ account: currentAccount }));
 }
 
 async function getToken() {
   try {
-    const response = await msalInstance.acquireTokenSilent({ scopes, account: currentAccount });
-    return response.accessToken;
-  } catch {
-    const response = await msalInstance.acquireTokenPopup({ scopes });
-    return response.accessToken;
+    const resp = await msalInstance.acquireTokenSilent({ scopes, account: currentAccount });
+    return resp.accessToken;
+  } catch (e) {
+    debugLog("Silent token fehlgeschlagen → Popup: " + e.message);
+    const resp = await msalInstance.acquireTokenPopup({ scopes });
+    return resp.accessToken;
   }
 }
 
@@ -202,34 +236,41 @@ function goToday() {
 
 function changeDay(delta) {
   const picker = document.getElementById("datePicker");
-  const d = new Date(picker.value);
+  const d = new Date(picker.value + "T12:00:00");
   d.setDate(d.getDate() + delta);
   picker.value = d.toISOString().split("T")[0];
   loadBookings();
 }
 
 function formatDateLabel(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString("de-DE", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
 }
 
 // ============================================================
-// GRAPH API – Raum-Kalender abrufen
+// GRAPH API
 // ============================================================
 async function fetchRoomEvents(token, roomEmail, dateStr) {
-  const start = `${dateStr}T06:00:00`;
-  const end   = `${dateStr}T22:00:00`;
+  const startLocal = new Date(`${dateStr}T06:00:00`);
+  const endLocal   = new Date(`${dateStr}T22:00:00`);
+
   const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(roomEmail)}/calendar/calendarView`
-            + `?startDateTime=${start}&endDateTime=${end}`
-            + `&$select=subject,start,end,organizer`
-            + `&$top=50`;
+    + `?startDateTime=${startLocal.toISOString()}`
+    + `&endDateTime=${endLocal.toISOString()}`
+    + `&$select=subject,start,end,organizer`
+    + `&$top=50`;
 
   const resp = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
+  if (resp.status === 403) { debugLog(`⚠️ 403 Kein Zugriff: ${roomEmail}`); return []; }
+  if (resp.status === 404) { debugLog(`⚠️ 404 Nicht gefunden: ${roomEmail}`); return []; }
   if (!resp.ok) {
-    console.warn(`Fehler bei ${roomEmail}: ${resp.status}`);
+    const txt = await resp.text();
+    debugLog(`⚠️ ${resp.status} bei ${roomEmail}: ${txt}`);
     return [];
   }
   const data = await resp.json();
@@ -237,30 +278,30 @@ async function fetchRoomEvents(token, roomEmail, dateStr) {
 }
 
 // ============================================================
-// BUCHUNGEN LADEN & CHART RENDERN
+// BUCHUNGEN LADEN
 // ============================================================
 async function loadBookings() {
   const dateStr = document.getElementById("datePicker").value;
   if (!dateStr) return;
 
-  setStatus("⏳ Lade Buchungen...");
+  setStatus("⏳ Lade Buchungen für " + formatDateLabel(dateStr) + " ...", "info");
 
   try {
     const token = await getToken();
     const allEvents = [];
 
-    // Alle Räume parallel abfragen
     await Promise.all(CONFIG.rooms.map(async (room) => {
       const events = await fetchRoomEvents(token, room.email, dateStr);
       events.forEach(ev => {
-        const startH = timeToHours(ev.start.dateTime);
-        const endH   = timeToHours(ev.end.dateTime);
+        const startH = isoToLocalHours(ev.start.dateTime);
+        const endH   = isoToLocalHours(ev.end.dateTime);
         allEvents.push({
-          room:      room.name,
-          subject:   ev.subject || "(kein Titel)",
-          organizer: ev.organizer?.emailAddress?.name || ev.organizer?.emailAddress?.address || "–",
-          start:     startH,
-          end:       endH,
+          room:       room.name,
+          subject:    ev.subject || "(kein Titel)",
+          organizer:  ev.organizer?.emailAddress?.name
+                   || ev.organizer?.emailAddress?.address || "–",
+          start:      startH,
+          end:        endH,
           startLabel: hoursToTime(startH),
           endLabel:   hoursToTime(endH)
         });
@@ -268,30 +309,30 @@ async function loadBookings() {
     }));
 
     if (allEvents.length === 0) {
-      setStatus(`✅ Keine Buchungen am ${formatDateLabel(dateStr)} gefunden.`, "success");
+      setStatus(`Keine Buchungen am ${formatDateLabel(dateStr)} gefunden.`, "success");
       document.getElementById("vega-chart").innerHTML =
-        `<p style="text-align:center;padding:60px;color:#aaa;font-size:1.1rem;">Keine Buchungen für diesen Tag.</p>`;
+        `<p style="text-align:center;padding:60px;color:#aaa;font-size:1.1rem;">
+          Keine Buchungen für diesen Tag.</p>`;
       return;
     }
 
-    setStatus(`✅ ${allEvents.length} Buchung(en) geladen für ${formatDateLabel(dateStr)}.`, "success");
+    setStatus(`✅ ${allEvents.length} Buchung(en) geladen – ${formatDateLabel(dateStr)}`, "success");
     renderChart(allEvents, dateStr);
 
   } catch (e) {
-    setStatus("❌ Fehler beim Laden: " + e.message, "error");
-    console.error(e);
+    setStatus("❌ Fehler: " + e.message, "error");
+    debugLog("loadBookings Fehler: " + e.stack);
   }
 }
 
-function timeToHours(isoString) {
-  // Graph gibt UTC zurück – in Berlin-Zeit umrechnen
-  const d = new Date(isoString);
+function isoToLocalHours(isoString) {
+  const d = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
   return d.getHours() + d.getMinutes() / 60;
 }
 
 function hoursToTime(h) {
   const hh = Math.floor(h).toString().padStart(2, "0");
-  const mm = Math.round((h % 1) * 60).toString().padStart(2, "0");
+  const mm = Math.round((h % 1) * 60).toString().padStart(2, "0");```html
   return `${hh}:${mm}`;
 }
 
@@ -301,55 +342,66 @@ function hoursToTime(h) {
 function renderChart(data, dateStr) {
   const roomOrder = CONFIG.rooms.map(r => r.name);
 
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "title": {
-      "text": `Building K012 – Raumbuchungen – ${formatDateLabel(dateStr)}`,
-      "fontSize": 15,
-      "font": "Arial"
-    },
-    "width": "container",
-    "height": 420,
-    "data": { "values": data },
+  const today = new Date().toISOString().split("T")[0];
+  const now   = new Date();
+  const nowH  = now.getHours() + now.getMinutes() / 60;
+  const showNowLine = (dateStr === today && nowH >= 6 && nowH <= 22);
+
+  const barLayer = {
     "mark": { "type": "bar", "cornerRadius": 3, "height": { "band": 0.75 } },
     "encoding": {
       "y": {
-        "field": "room",
-        "type": "nominal",
-        "sort": roomOrder,
+        "field": "room", "type": "nominal", "sort": roomOrder,
         "axis": { "title": "Raum", "labelFontSize": 12, "titleFontSize": 13 }
       },
       "x": {
-        "field": "start",
-        "type": "quantitative",
+        "field": "start", "type": "quantitative",
         "scale": { "domain": [6, 22] },
         "axis": {
-          "title": "Uhrzeit",
-          "tickCount": 17,
-          "labelFontSize": 11,
-          "titleFontSize": 13,
-          "labelExpr": "datum.value % 1 === 0 ? datum.value + ':00' : ''"
+          "title": "Uhrzeit", "tickCount": 17,
+          "labelFontSize": 11, "titleFontSize": 13,
+          "labelExpr": "datum.value % 1 === 0 ? (datum.value < 10 ? '0' : '') + datum.value + ':00' : ''"
         }
       },
       "x2": { "field": "end" },
       "color": {
-        "field": "room",
-        "type": "nominal",
+        "field": "room", "type": "nominal",
         "scale": {
           "domain": roomOrder,
-          "range": ["#009fe4","#00bb7e","#e6007c","#7d55c7","#ff7f41","#ffee00","#333333","#00a0af","#a0c840"]
+          "range": ["#009fe4","#00bb7e","#e6007c","#7d55c7","#ff7f41","#f0c000","#333333","#00a0af","#a0c840"]
         },
         "legend": { "title": "Raum", "orient": "right", "labelFontSize": 11 }
       },
       "tooltip": [
-        { "field": "room",       "type": "nominal",      "title": "Raum" },
-        { "field": "subject",    "type": "nominal",      "title": "Besprechung" },
-        { "field": "organizer",  "type": "nominal",      "title": "Organis```html
-ator" },
-        { "field": "startLabel", "type": "nominal",      "title": "Start" },
-        { "field": "endLabel",   "type": "nominal",      "title": "Ende" }
+        { "field": "room",       "type": "nominal", "title": "Raum" },
+        { "field": "subject",    "type": "nominal", "title": "Besprechung" },
+        { "field": "organizer",  "type": "nominal", "title": "Organisator" },
+        { "field": "startLabel", "type": "nominal", "title": "Start" },
+        { "field": "endLabel",   "type": "nominal", "title": "Ende" }
       ]
+    }
+  };
+
+  const nowLayer = {
+    "data": { "values": [{ "now": nowH }] },
+    "mark": { "type": "rule", "color": "red", "strokeWidth": 2, "strokeDash": [4, 3] },
+    "encoding": {
+      "x": { "field": "now", "type": "quantitative" },
+      "tooltip": [{ "field": "now", "title": "Jetzt", "type": "quantitative",
+        "format": ".0f" }]
+    }
+  };
+
+  const spec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "title": {
+      "text": `Building K012 – Raumbuchungen – ${formatDateLabel(dateStr)}`,
+      "fontSize": 15, "font": "Arial"
     },
+    "width": "container",
+    "height": 420,
+    "data": { "values": data },
+    "layer": showNowLine ? [barLayer, nowLayer] : [barLayer],
     "config": {
       "view": { "stroke": "#e0e0e0" },
       "axis": { "grid": true, "gridColor": "#f0f0f0" },
@@ -370,16 +422,10 @@ function setStatus(msg, type = "") {
   el.className = type;
 }
 
-// MSAL Redirect handling beim Seitenload
-msalInstance.handleRedirectPromise().then(response => {
-  if (response) {
-    currentAccount = response.account;
-    document.getElementById("user-info").textContent = `👤 ${currentAccount.name}`;
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("main-content").style.display = "block";
-    goToday();
-  }
-});
+// ============================================================
+// START
+// ============================================================
+initApp();
 </script>
 </body>
 </html>
