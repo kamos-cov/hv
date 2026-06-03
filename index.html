@@ -40,9 +40,9 @@
     #status {
       padding: 10px 24px; font-size: 0.85rem; color: #666; min-height: 32px;
     }
-    #status.error  { color: #c0392b; font-weight: bold; }
+    #status.error   { color: #c0392b; font-weight: bold; }
     #status.success { color: #27ae60; }
-    #status.info   { color: #2980b9; }
+    #status.info    { color: #2980b9; }
     #chart-container {
       padding: 16px 24px; background: white;
       margin: 16px; border-radius: 8px;
@@ -72,8 +72,8 @@
 
 <div id="login-screen" class="login-screen">
   <p>Bitte melde dich mit deinem Covestro-Account an.</p>
-  <button id="login-btn" disabled onclick="signIn()">🔐 Mit Microsoft anmelden</button>
-  <div id="debug-box">⏳ Initialisiere MSAL...</div>
+  <button id="login-btn" disabled onclick="signIn()">⏳ Initialisiere...</button>
+  <div id="debug-box">⏳ Warte auf Seitenladung...</div>
 </div>
 
 <div id="main-content" style="display:none">
@@ -126,27 +126,23 @@ function log(msg) {
 // ── MSAL ─────────────────────────────────────────────────────
 let msalInstance = null;
 let currentAccount = null;
-const scopes = ["openid", "profile", "Calendars```html
-.Read", "Calendars.Read.Shared"];
+const scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 
-(async function initApp() {
+// ── INITIALISIERUNG – wartet bis ALLE Scripts geladen sind ───
+window.addEventListener("load", async function () {
   try {
     log("Erstelle MSAL-Instanz...");
+
     msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId:    CONFIG.clientId,
-        authority:   `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+        authority:   `https://login.microsofton```html
+line.com/${CONFIG.tenantId}`,
         redirectUri: CONFIG.redirectUri
       },
       cache: {
         cacheLocation: "sessionStorage",
         storeAuthStateInCookie: true
-      },
-      system: {
-        loggerOptions: {
-          loggerCallback: (level, message) => log("MSAL: " + message),
-          logLevel: msal.LogLevel.Warning
-        }
       }
     });
 
@@ -154,23 +150,20 @@ const scopes = ["openid", "profile", "Calendars```html
     await msalInstance.initialize();
     log("✅ MSAL bereit. Prüfe Redirect...");
 
-    // Redirect-Antwort abfangen
     const redirectResponse = await msalInstance.handleRedirectPromise();
     if (redirectResponse) {
-      log("✅ Redirect-Login erfolgreich: " + redirectResponse.account.username);
+      log("✅ Redirect-Login: " + redirectResponse.account.username);
       onSignedIn(redirectResponse.account);
       return;
     }
 
-    // Bereits eingeloggt?
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
-      log("✅ Bestehender Account gefunden: " + accounts[0].username);
+      log("✅ Bestehender Account: " + accounts[0].username);
       onSignedIn(accounts[0]);
       return;
     }
 
-    // Button freischalten
     log("Bereit – bitte anmelden.");
     const btn = document.getElementById("login-btn");
     btn.disabled = false;
@@ -178,10 +171,11 @@ const scopes = ["openid", "profile", "Calendars```html
 
   } catch (e) {
     log("❌ Init-Fehler: " + e.message);
-    document.getElementById("login-btn").textContent = "❌ Fehler – Seite neu laden";
-    document.getElementById("login-btn").disabled = false;
+    const btn = document.getElementById("login-btn");
+    btn.disabled = false;
+    btn.textContent = "❌ Fehler – Seite neu laden";
   }
-})();
+});
 
 // ── LOGIN ─────────────────────────────────────────────────────
 async function signIn() {
@@ -316,8 +310,7 @@ async function loadBookings() {
     }));
 
     if (allEvents.length === 0) {
-      setStatus(`Keine Buchungen am ${formatDateLabel(```html
-dateStr)} gefunden.`, "success");
+      setStatus(`Keine Buchungen am ${formatDateLabel(dateStr)} gefunden.`, "success");
       document.getElementById("vega-chart").innerHTML =
         `<p style="text-align:center;padding:60px;color:#aaa;font-size:1.1rem;">
           Keine Buchungen für diesen Tag.</p>`;
@@ -330,7 +323,7 @@ dateStr)} gefunden.`, "success");
   } catch (e) {
     setStatus("❌ Fehler: " + e.message, "error");
     log("loadBookings Fehler: " + e.stack);
-  }
+  }```javascript
 }
 
 function isoToLocalHours(isoString) {
