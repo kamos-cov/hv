@@ -1,380 +1,585 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Building K012 - Raumbuchungen</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #f4f6f8; color: #333; }
-    header { background: #009fe4; color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
-    header h1 { font-size: 1.3rem; }
-    button { padding: 7px 16px; background: #009fe4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-    button:hover { background: #007bbf; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    button.secondary { background: white; color: #009fe4; border: 1px solid #009fe4; }
-    button.secondary:hover { background: #e8f5fd; }
-    .toolbar { background: white; padding: 12px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid #e0e0e0; }
-    .toolbar label { font-weight: bold; font-size: 0.9rem; }
-    .toolbar input[type="date"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-    #status { padding: 10px 24px; font-size: 0.85rem; color: #666; min-height: 32px; }
-    #status.error { color: #c0392b; font-weight: bold; }
-    #status.success { color: #27ae60; }
-    #status.info { color: #2980b9; }
-    #chart-container { padding: 16px 24px; background: white; margin: 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); min-height: 400px; }
-    .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; }
-    .login-screen p { color: #666; font-size: 1rem; }
-    #debug-box { width: 90%; max-width: 600px; padding: 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px; font-size: 0.78rem; color: #333; font-family: monospace; white-space: pre-wrap; max-height: 250px; overflow-y: auto; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raumbelegung · Meetingräume</title>
+<link rel="preconnect" href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.googleapis.com%2F&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294685480%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=m0maNyKkAyhi8ihAQbncuNU5AvEatqHn8tFovrxV5uQ%3D&reserved=0" />
+<link rel="preconnect" href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.gstatic.com%2F&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294715983%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=ubFifhgFSSkp92m4DXGcAKkZdf6WwoJ8W4ZvEiPLe4w%3D&reserved=0" crossorigin />
+<link href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.googleapis.com%2Fcss2%3Ffamily%3DSpace%2BGrotesk%3Awght%40500%3B600%3B700%26family%3DInter%3Awght%40400%3B500%3B600%26family%3DJetBrains%2BMono%3Awght%40400%3B500%26display%3Dswap&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294734822%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=aWigDlsSTHrixnsFnCbMx4LxAWiwNY38X7e0xLiHVlU%3D&reserved=0" rel="stylesheet" />
+<script src="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40azure%2Fmsal-browser%403.27.0%2Flib%2Fmsal-browser.min.js&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294753162%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=oKyRHa8TAxPtD%2BIl2b5Sfnt3jQm4vc8fgZJPDv3wG3E%3D&reserved=0"></script>
+<style>
+  :root{
+    --bg:#E9ECEF; --surface:#FFFFFF; --ink:#181B1F; --muted:#646E78;
+    --hair:#DCE1E6; --hair-strong:#C7CED5;
+    --free:#1F9E8B; --free-soft:#E4F3F0; --free-line:#BFE3DC;
+    --booked:#BD5A4E; --booked-soft:#F6E6E3;
+    --now:#E0A23C;
+    --shadow:0 1px 2px rgba(20,30,40,.06),0 8px 24px rgba(20,30,40,.06);
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif; font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+  /* ---- Topbar ---- */
+  header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    padding:14px 22px; background:rgba(233,236,239,.85);
+    backdrop-filter:saturate(140%) blur(8px);
+    border-bottom:1px solid var(--hair-strong);
+  }
+  .brand{display:flex; flex-direction:column; gap:1px}
+  .brand b{font-family:"Space Grotesk"; font-weight:700; font-size:18px; letter-spacing:-.01em}
+  .brand .date{color:var(--muted); font-size:12.5px}
+  .spacer{flex:1}
+  .legend{display:flex; gap:16px; align-items:center; color:var(--muted); font-size:12.5px}
+  .legend .dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+  .dot.free{background:var(--free)} .dot.booked{background:var(--booked)} .dot.now{background:var(--now)}
+  button{font-family:inherit; cursor:pointer; border:0}
+  .btn{
+    background:var(--surface); border:1px solid var(--hair-strong); color:var(--ink);
+    padding:8px 13px; border-radius:8px; font-size:13.5px; font-weight:500;
+    display:inline-flex; align-items:center; gap:7px; transition:.15s;
+  }
+  .btn:hover{border-color:var(--muted)}
+  .btn.primary{background:var(--free); border-color:var(--free); color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .who{color:var(--muted); font-size:12.5px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+  /* ---- Board ---- */
+  main{padding:18px 22px 60px; max-width:1500px; margin:0 auto}
+  .axis{
+    display:grid; grid-template-columns:var(--labelw) 1fr; align-items:end;
+    margin-bottom:6px; position:sticky; top:64px; z-index:20;
+    --labelw:230px;
+  }
+  .axis .pad{}
+  .axis .ticks{position:relative; height:20px; border-bottom:1px solid var(--hair-strong)}
+  .tick{position:absolute; transform:translateX(-50%); bottom:3px; font-size:11px; color:var(--muted)}
+  .tick.mono{font-size:11px}
+
+  .lane{
+    display:grid; grid-template-columns:230px 1fr; align-items:stretch;
+    gap:0; background:var(--surface); border:1px solid var(--hair);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    margin-bottom:10px; overflow:hidden;
+  }
+  .lane .label{padding:14px 16px; border-right:1px solid var(--hair); display:flex; flex-direction:column; gap:6px; justify-content:center}
+  .lane .label .rn{font-family:"Space Grotesk"; font-weight:600; font-size:15px}
+  .lane .label .rsub{font-size:11.5px; color:var(--muted)}
+  .pill{align-self:flex-start; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px}
+  .pill.free{background:var(--free-soft); color:#0c6f60}
+  .pill.booked{background:var(--booked-soft); color:#8f3a30}
+  .pill.err{background:#F1E7D6; color:#8a6a2a}
+
+  .track{
+    position:relative; height:62px; cursor:crosshair;
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent calc(var(--step) - 1px), var(--hair) calc(var(--step) - 1px), var(--hair) var(--step));
+  }
+  .track .free-hint{position:absolute; inset:0; background:var(--free-soft); opacity:0}
+  .track:hover .free-hint{opacity:.5}
+  .block{
+    position:absolute; top:7px; bottom:7px; border-radius:7px; overflow:hidden;
+    background:var(--booked); color:#fff; padding:6px 9px;
+    display:flex; flex-direction:column; justify-content:center; gap:1px;
+    box-shadow:0 1px 0 rgba(0,0,0,.06) inset; min-width:2px;
+  }
+  .block .bt{font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .block .bh{font-size:10.5px; opacity:.85}
+  .nowline{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--now); z-index:5; pointer-events:none}
+  .nowline::before{content:""; position:absolute; top:-3px; left:-3px; width:8px; height:8px; border-radius:50%; background:var(--now)}
+  .ghost{position:absolute; top:7px; bottom:7px; border:2px dashed var(--free); background:var(--free-soft); border-radius:7px; pointer-events:none; opacity:0}
+
+  .past-veil{position:absolute; top:0; bottom:0; left:0; background:rgba(120,130,140,.10); pointer-events:none}
+
+  /* ---- States ---- */
+  .notice{
+    background:var(--surface); border:1px solid var(--hair-strong); border-radius:var(--radius);
+    padding:22px 24px; box-shadow:var(--shadow); max-width:720px; margin:30px auto;
+  }
+  .notice h2{font-family:"Space Grotesk"; margin:0 0 8px; font-size:18px}
+  .notice p{margin:6px 0; color:#3b434b}
+  .notice code{background:#EEF1F4; padding:1px 6px; border-radius:5px; font-family:"JetBrains Mono"; font-size:13px}
+  .skeleton{height:62px; background:linear-gradient(90deg,#eef1f4,#f6f8fa,#eef1f4); background-size:200% 100%; animation:sh 1.3s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* ---- Modal ---- */
+  .overlay{position:fixed; inset:0; background:rgba(18,24,30,.42); display:none; align-items:center; justify-content:center; z-index:60; padding:20px}
+  .overlay.on{display:flex}
+  .modal{background:var(--surface); border-radius:14px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden}
+  .modal .mh{padding:18px 22px; border-bottom:1px solid var(--hair)}
+  .modal .mh h3{margin:0; font-family:"Space Grotesk"; font-size:17px}
+  .modal .mh span{color:var(--muted); font-size:13px}
+  .modal .mb{padding:18px 22px; display:flex; flex-direction:column; gap:14px}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:5px}
+  .field input{width:100%; padding:10px 12px; border:1px solid var(--hair-strong); border-radius:8px; font-family:inherit; font-size:14px}
+  .field input:focus{outline:2px solid var(--free); outline-offset:-1px; border-color:var(--free)}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .mf{padding:16px 22px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--hair)}
+  .err-msg{color:#a3382c; font-size:12.5px; min-height:1px}
+
+  /* ---- Toast ---- */
+  #toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:#181B1F; color:#fff; padding:11px 18px; border-radius:10px; font-size:13.5px; z-index:80; transition:.25s; pointer-events:none; max-width:90vw}
+  #toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:#8f3a30}
+
+  @media(max-width:720px){
+    .lane{grid-template-columns:1fr}
+    .lane .label{border-right:0; border-bottom:1px solid var(--hair); flex-direction:row; align-items:center; flex-wrap:wrap}
+    .axis{grid-template-columns:1fr; --labelw:0}
+    .axis .pad{display:none}
+    .legend{display:none}
+  }
+</style>
 </head>
 <body>
+
 <header>
-  <h1>Building K012 - Raumbuchungen (5. OG)</h1>
-  <span id="user-info"></span>
-</header>
-<div id="login-screen" class="login-screen">
-  <p>Bitte melde dich mit deinem Covestro-Account an.</p>
-  <button id="login-btn" disabled onclick="signIn()">Laedt...</button>
-  <div id="debug-box">Lade Scripts...</div>
-</div>
-<div id="main-content" style="display:none">
-  <div class="toolbar">
-    <label for="datePicker">Datum:</label>
-    <input type="date" id="datePicker">
-    <button onclick="loadBookings()">Laden</button>
-    <button class="secondary" onclick="goToday()">Heute</button>
-    <button class="secondary" onclick="changeDay(-1)">Zurueck</button>
-    <button class="secondary" onclick="changeDay(1)">Vor</button>
-    <button class="secondary" onclick="signOut()" style="margin-left:auto">Abmelden</button>
+  <div class="brand">
+    <b>Raumbelegung</b>
+    <span class="date mono" id="todayLabel">–</span>
   </div>
-  <div id="status"></div>
-  <div id="chart-container"><div id="vega-chart"></div></div>
-  <p style="padding:0 24px 16px;font-size:0.8rem;color:#aaa">Hover fuer Details - Zeitbereich 06:00-22:00 Uhr</p>
+  <div class="spacer"></div>
+  <div class="legend">
+    <span><span class="dot free"></span>Frei</span>
+    <span><span class="dot booked"></span>Belegt</span>
+    <span><span class="dot now"></span>Jetzt</span>
+  </div>
+  <span class="who" id="who"></span>
+  <button class="btn" id="refreshBtn" title="Aktualisieren">⟳ Aktualisieren</button>
+  <button class="btn" id="authBtn">Anmelden</button>
+</header>
+
+<main id="board">
+  <!-- gefüllt per JS -->
+</main>
+
+<!-- Buchungs-Dialog -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="mh">
+      <h3>Raum buchen</h3>
+      <span id="mRoom">–</span>
+    </div>
+    <div class="mb">
+      <div class="field">
+        <label for="mSubject">Titel</label>
+        <input id="mSubject" type="text" value="Ad-hoc Buchung" />
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="mStart">Von</label>
+          <input id="mStart" type="time" step="900" />
+        </div>
+        <div class="field">
+          <label for="mEnd">Bis</label>
+          <input id="mEnd" type="time" step="900" />
+        </div>
+      </div>
+      <div class="err-msg" id="mErr"></div>
+    </div>
+    <div class="mf">
+      <button class="btn" id="mCancel">Abbrechen</button>
+      <button class="btn primary" id="mConfirm">Jetzt buchen</button>
+    </div>
+  </div>
 </div>
-<script>
-function log(msg) {
-  var box = document.getElementById("debug-box");
-  if (box) {
-    var time = new Date().toLocaleTimeString("de-DE");
-    box.textContent += "\n[" + time + "] " + msg;
-    box.scrollTop = box.scrollHeight;
-  }
-  console.log(msg);
-}
 
-function initApp() {
-  log("initApp aufgerufen - warte auf Hauptscript...");
-  setTimeout(function() {
-    if (typeof msal !== "undefined") {
-      startMsal();
-    } else {
-      log("FEHLER: msal Objekt nicht verfuegbar!");
-    }
-  }, 100);
-}
-</script>
+<div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" onload="log('MSAL geladen')" onerror="log('FEHLER: MSAL nicht geladen')"></script>
-<script src="https://unpkg.com/vega@5/build/vega.min.js" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
-<script src="https://unpkg.com/vega-lite@5/build/vega-lite.min.js" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
-<script src="https://unpkg.com/vega-embed@6/build/vega-embed.min.js" onload="log('VegaEmbed geladen');initApp()" onerror="log('FEHLER: VegaEmbed nicht geladen')"></script>
 <script>
-var CONFIG = {
-  clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1",
-  tenantId: "0468bc4a-134c-4fb0-b843-a2a3d583e919",
-  redirectUri: "https://kamos-cov.github.io/hv/",
+/* ============================================================
+   1) KONFIGURATION  –  hier deine Werte eintragen
+   ============================================================ */
+const CONFIG = {
+  tenantId: "0468bc4a-134c-4fb0-b843-a2a3d583e919",          // Verzeichnis-(Tenant-)ID
+  clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1", // Anwendungs-(Client-)ID der App-Registrierung
+
+  // Deine 10 Räume. Bei Bedarf erweitern (RES_13900 ... RES_13999).
   rooms: [
-    { email: "RES_13900@covestro.com", name: "Raum 0501" },
-    { email: "RES_14172@covestro.com", name: "Raum 0502" },
-    { email: "RES_14171@covestro.com", name: "Raum 0509" },
-    { email: "RES_14175@covestro.com", name: "Raum 0510" },
-    { email: "RES_13844@covestro.com", name: "Raum 0521" },
-    { email: "RES_14173@covestro.com", name: "Raum 0522" },
-    { email: "RES_14174@covestro.com", name: "Raum 0530" },
-    { email: "RES_14128@covestro.com", name: "Raum 0550" },
-    { email: "RES_14170@covestro.com", name: "Raum 0572" }
-  ]
+    "RES_13900@covestro.com",
+    "RES_14172@covestro.com",
+    "RES_14171@covestro.com",
+    "RES_14175@covestro.com",
+    "RES_13844@covestro.com",
+    "RES_14173@covestro.com",
+    "RES_14174@covestro.com",
+    "RES_13907@covestro.com",
+    "RES_14128@covestro.com",
+    "RES_14170@covestro.com",
+  ],
+  dayStartHour: 7,        // Anfang der Zeitleiste
+  dayEndHour: 20,         // Ende der Zeitleiste
+  slotMinutes: 15,        // Raster + Standard-Buchungsdauer-Schritt
+  defaultDurationMin: 30, // Vorbelegte Dauer beim Klick
+  timeZone: "W. Europe Standard Time", // Outlook-Zeitzonenname
+  autoRefreshSec: 60,
 };
+/* ============================================================ */
 
-var msalInstance = null;
-var currentAccount = null;
-var scopes = ["openid", "profile", "Calendars.ReadWrite.Shared", "User.Read"];
+const GRAPH = "https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgraph.microsoft.com%2Fv1.0&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294771566%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=1f6ThRJ0rJW7gMWceKKA%2FVhjtbBI01dvfphHRUBPCdU%3D&reserved=0";
+const SCOPES = ["User.Read", "Calendars.ReadWrite.Shared"];
 
-function clearMsalCache() {
-  sessionStorage.clear();
-  localStorage.clear();
-  var cookies = document.cookie.split(";");
-  cookies.forEach(function(cookie) {
-    var name = cookie.split("=")[0].trim();
-    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-  });
-  log("Cache und Cookies geleert.");
+let msalInstance = null;
+let account = null;
+let refreshTimer = null;
+let pendingBooking = null; // {room, dateStr}
+
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const pad = n => String(n).padStart(2,"0");
+const isConfigured = () => CONFIG.tenantId && !CONFIG.tenantId.startsWith("DEINE_")
+                        && CONFIG.clientId && !CONFIG.clientId.startsWith("DEINE_");
+
+/* ---------- Zeit-Helfer (lokale Browserzeit) ---------- */
+function dayBounds(){
+  const s = new Date(); s.setHours(CONFIG.dayStartHour,0,0,0);
+  const e = new Date(); e.setHours(CONFIG.dayEndHour,0,0,0);
+  return {s,e, total:(e-s)/60000};
+}
+function localNaive(d){ // "YYYY-MM-DDTHH:mm:ss" ohne Zeitzone
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function hhmm(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function pctOf(d){
+  const {s,total}=dayBounds();
+  return Math.max(0,Math.min(100, ((d - s)/60000/total)*100));
+}
+function roundToSlot(d){
+  const ms = CONFIG.slotMinutes*60000;
+  return new Date(Math.floor(d.getTime()/ms)*ms);
 }
 
-function createMsalInstance() {
-  return new msal.PublicClientApplication({
-    auth: {
+/* ---------- Toast ---------- */
+function toast(msg, bad=false){
+  const t=$("#toast"); t.textContent=msg; t.className = bad?"on bad":"on";
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className="",3200);
+}
+
+/* ============================================================
+   2) AUTH
+   ============================================================ */
+async function initAuth(){
+  msalInstance = new msal.PublicClientApplication({
+    auth:{
       clientId: CONFIG.clientId,
-      authority: "https://login.microsoftonline.com/" + CONFIG.tenantId,
-      redirectUri: CONFIG.redirectUri
+      authority: `https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Flogin.microsoftonline.com%2F%24&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294789736%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=Lt5XbmGuJtT4fbAB39qmP4PCIsFSyXnXNvdYcdU8G7Q%3D&reserved=0{CONFIG.tenantId}`,
+      redirectUri: window.location.origin + window.location.pathname,
     },
-    cache: {
-      cacheLocation: "localStorage",
-      storeAuthStateInCookie: false
-    }
+    cache:{ cacheLocation:"localStorage", storeAuthStateInCookie:false },
   });
+  await msalInstance.initialize();
+  const resp = await msalInstance.handleRedirectPromise();
+  account = resp?.account || msalInstance.getAllAccounts()[0] || null;
+  updateAuthUI();
 }
-
-async function startMsal() {
-  try {
-    clearMsalCache();
-    log("Erstelle MSAL-Instanz...");
-    msalInstance = createMsalInstance();
-    log("Initialisiere MSAL...");
-    await msalInstance.initialize();
-    log("MSAL bereit. Pruefe Redirect...");
-    var redirectResponse = await msalInstance.handleRedirectPromise();
-    if (redirectResponse) {
-      log("Redirect-Login: " + redirectResponse.account.username);
-      onSignedIn(redirectResponse.account);
-      return;
-    }
-    var accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      log("Bestehender Account: " + accounts[0].username);
-      onSignedIn(accounts[0]);
-      return;
-    }
-    log("Bereit - bitte anmelden.");
-    var btn = document.getElementById("login-btn");
-    btn.disabled = false;
-    btn.textContent = "Mit Microsoft anmelden";
-  } catch (e) {
-    log("startMsal Fehler: " + e.message);
-    var btn = document.getElementById("login-btn");
-    btn.disabled = false;
-    btn.textContent = "Fehler - Seite neu laden";
+function updateAuthUI(){
+  const btn=$("#authBtn"); const who=$("#who");
+  if(account){ btn.textContent="Abmelden"; who.textContent=account.username||account.name||""; }
+  else { btn.textContent="Anmelden"; who.textContent=""; }
+}
+async function signIn(){ await msalInstance.loginRedirect({ scopes:SCOPES }); }
+async function signOut(){ await msalInstance.logoutRedirect({ account }); }
+async function getToken(){
+  if(!account) account = msalInstance.getAllAccounts()[0];
+  if(!account){ await signIn(); return null; }
+  try{
+    const r = await msalInstance.acquireTokenSilent({ scopes:SCOPES, account });
+    return r.accessToken;
+  }catch(e){
+    await msalInstance.acquireTokenRedirect({ scopes:SCOPES, account });
+    return null;
   }
 }
 
-function signIn() {
-  log("Login gestartet...");
-  clearMsalCache();
-  setTimeout(function() {
-    createMsalInstance().initialize().then(function(instance) {
-      msalInstance = instance;
-      log("Starte Redirect zu Microsoft...");
-      return msalInstance.loginRedirect({
-        scopes: scopes,
-        prompt: "select_account"
-      });
-    }).catch(function(e) {
-      log("Fehler: " + e.message);
-      var btn = document.getElementById("login-btn");
-      btn.disabled = false;
-      btn.textContent = "Mit Microsoft anmelden";
-    });
-  }, 500);
+/* ============================================================
+   3) GRAPH
+   ============================================================ */
+async function fetchRoom(room, token){
+  const {s,e}=dayBounds();
+  const url = `${GRAPH}/users/${encodeURIComponent(room)}/calendarView`
+    + `?startDateTime=${encodeURIComponent(localNaive(s))}`
+    + `&endDateTime=${encodeURIComponent(localNaive(e))}`
+    + `&$select=subject,start,end,showAs,isAllDay`
+    + `&$orderby=start/dateTime&$top=100`;
+  const res = await fetch(url,{
+    headers:{
+      Authorization:`Bearer ${token}`,
+      Prefer:`outlook.timezone="${CONFIG.timeZone}"`,
+    }
+  });
+  if(!res.ok){
+    const code = res.status;
+    throw new Error(code===403?"Kein Zugriff":code===404?"Nicht gefunden":`Fehler ${code}`);
+  }
+  const data = await res.json();
+  return (data.value||[]).map(ev=>({
+    subject: ev.subject || "Belegt",
+    start: new Date(ev.start.dateTime),
+    end: new Date(ev.end.dateTime),
+    allDay: ev.isAllDay,
+  })).filter(ev=>ev.end>ev.start);
 }
 
-function onSignedIn(account) {
-  currentAccount = account;
-  document.getElementById("user-info").textContent = account.name || account.username;
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("main-content").style.display = "block";
-  goToday();
-}
-
-function signOut() {
-  clearMsalCache();
-  msalInstance.logoutRedirect({ account: currentAccount });
-}
-
-function getToken() {
-  return msalInstance.acquireTokenSilent({ scopes: scopes, account: currentAccount })
-    .catch(function(e) {
-      log("Silent token fehlgeschlagen: " + e.message);
-      return msalInstance.acquireTokenRedirect({ scopes: scopes });
+async function createBooking(room, subject, start, end){
+  const token = await getToken(); if(!token) return false;
+  const res = await fetch(`${GRAPH}/users/${encodeURIComponent(room)}/events`,{
+    method:"POST",
+    headers:{ Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
+    body: JSON.stringify({
+      subject,
+      start:{ dateTime: localNaive(start), timeZone: CONFIG.timeZone },
+      end:{   dateTime: localNaive(end),   timeZone: CONFIG.timeZone },
     })
-    .then(function(resp) { return resp.accessToken; });
+  });
+  if(!res.ok){
+    let msg = `Fehler ${res.status}`;
+    try{ const j=await res.json(); if(j.error?.message) msg=j.error.message; }catch(_){}
+    throw new Error(msg);
+  }
+  return true;
 }
 
-function goToday() {
-  var today = new Date().toISOString().split("T")[0];
-  document.getElementById("datePicker").value = today;
-  loadBookings();
+/* ============================================================
+   4) RENDER
+   ============================================================ */
+function buildSkeleton(){
+  const board=$("#board"); board.innerHTML="";
+  board.appendChild(buildAxis());
+  CONFIG.rooms.forEach(room=>{
+    const lane=document.createElement("div"); lane.className="lane";
+    lane.innerHTML=`
+      <div class="label">
+        <div class="rn">${roomShort(room)}</div>
+        <div class="rsub mono">${room}</div>
+        <span class="pill" data-pill>…</span>
+      </div>
+      <div class="track skeleton" data-track="${room}"></div>`;
+    board.appendChild(lane);
+  });
+}
+function roomShort(room){ return (room.split("@")[0]||room).replace(/_/g," "); }
+
+function buildAxis(){
+  const {s}=dayBounds();
+  const wrap=document.createElement("div"); wrap.className="axis";
+  let ticks="";
+  for(let h=CONFIG.dayStartHour; h<=CONFIG.dayEndHour; h++){
+    const d=new Date(s); d.setHours(h,0,0,0);
+    ticks+=`<span class="tick mono" style="left:${pctOf(d)}%">${pad(h)}:00</span>`;
+  }
+  wrap.innerHTML=`<div class="pad"></div><div class="ticks">${ticks}</div>`;
+  return wrap;
 }
 
-function changeDay(delta) {
-  var picker = document.getElementById("datePicker");
-  var d = new Date(picker.value + "T12:00:00");
-  d.setDate(d.getDate() + delta);
-  picker.value = d.toISOString().split("T")[0];
-  loadBookings();
+function renderRoom(room, events){
+  const track = $(`[data-track="${CSS.escape(room)}"]`);
+  if(!track) return;
+  track.className="track";
+  track.innerHTML="";
+
+  // Stepraster-Breite setzen
+  const {s,e,total}=dayBounds();
+  const stepPct = (CONFIG.slotMinutes/total)*100;
+  track.style.setProperty("--step", stepPct+"%");
+
+  // klickbarer Frei-Layer
+  const hint=document.createElement("div"); hint.className="free-hint"; track.appendChild(hint);
+
+  // Vergangenheit abdunkeln
+  const now=new Date();
+  if(now>s){
+    const veil=document.createElement("div"); veil.className="past-veil";
+    veil.style.width=Math.min(100,pctOf(now))+"%"; track.appendChild(veil);
+  }
+
+  // Buchungsblöcke
+  events.forEach(ev=>{
+    const left=pctOf(ev.start), right=pctOf(ev.end);
+    if(right<=left) return;
+    const b=document.createElement("div"); b.className="block";
+    b.style.left=left+"%"; b.style.width=(right-left)+"%";
+    b.innerHTML=`<div class="bt">${escapeHtml(ev.subject)}</div>
+                 <div class="bh mono">${hhmm(ev.start)}–${hhmm(ev.end)}</div>`;
+    b.addEventListener("click",e=>{ e.stopPropagation(); }); // belegt = nicht buchbar
+    track.appendChild(b);
+  });
+
+  // Now-Linie
+  if(now>=s && now<=e){
+    const nl=document.createElement("div"); nl.className="nowline"; nl.style.left=pctOf(now)+"%";
+    track.appendChild(nl);
+  }
+
+  // Klick = buchen
+  track.onclick = (e)=> handleTrackClick(e, track, room, events);
+
+  // Status-Pill
+  updatePill(room, events);
 }
 
-function formatDateLabel(dateStr) {
-  return new Date(dateStr + "T12:00:00").toLocaleDateString("de-DE", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric"
+function updatePill(room, events){
+  const lane = $(`[data-track="${CSS.escape(room)}"]`)?.closest(".lane");
+  const pill = lane?.querySelector("[data-pill]"); if(!pill) return;
+  const now=new Date();
+  const current = events.find(ev=> now>=ev.start && now<ev.end);
+  if(current){
+    pill.className="pill booked"; pill.textContent=`Belegt bis ${hhmm(current.end)}`;
+  }else{
+    const next = events.filter(ev=>ev.start>now).sort((a,b)=>a.start-b.start)[0];
+    pill.className="pill free";
+    pill.textContent = next ? `Frei bis ${hhmm(next.start)}` : "Frei";
+  }
+}
+
+function renderError(room, msg){
+  const track=$(`[data-track="${CSS.escape(room)}"]`); if(!track) return;
+  track.className="track"; track.innerHTML="";
+  track.onclick=null;
+  const lane=track.closest(".lane"); const pill=lane?.querySelector("[data-pill]");
+  if(pill){ pill.className="pill err"; pill.textContent=msg; }
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ---------- Klick auf Zeitleiste ---------- */
+function handleTrackClick(e, track, room, events){
+  if(e.target.closest(".block")) return;
+  const rect=track.getBoundingClientRect();
+  const ratio=(e.clientX-rect.left)/rect.width;
+  const {s,total}=dayBounds();
+  let clicked=new Date(s.getTime() + ratio*total*60000);
+  clicked=roundToSlot(clicked);
+
+  const now=new Date();
+  if(clicked < now) clicked = roundToSlot(new Date(now.getTime()+CONFIG.slotMinutes*60000));
+
+  // Überlappung?
+  if(events.some(ev=> clicked>=ev.start && clicked<ev.end)){
+    toast("Dieser Zeitpunkt ist bereits belegt.", true); return;
+  }
+  // Standard-Ende, gedeckelt auf nächste Buchung / Tagesende
+  let end=new Date(clicked.getTime()+CONFIG.defaultDurationMin*60000);
+  const next=events.filter(ev=>ev.start>clicked).sort((a,b)=>a.start-b.start)[0];
+  const {e:dayEnd}=dayBounds();
+  if(next && end>next.start) end=next.start;
+  if(end>dayEnd) end=dayEnd;
+  if(end<=clicked){ toast("Kein freier Slot ab hier.", true); return; }
+
+  openModal(room, clicked, end);
+}
+
+/* ---------- Modal ---------- */
+function openModal(room, start, end){
+  pendingBooking={room};
+  $("#mRoom").textContent=`${roomShort(room)} · ${room}`;
+  $("#mSubject").value="Ad-hoc Buchung";
+  $("#mStart").value=hhmm(start);
+  $("#mEnd").value=hhmm(end);
+  $("#mErr").textContent="";
+  $("#overlay").classList.add("on");
+  $("#mSubject").focus();
+}
+function closeModal(){ $("#overlay").classList.remove("on"); pendingBooking=null; }
+
+function timeToDate(v){
+  const [h,m]=v.split(":").map(Number);
+  const d=new Date(); d.setHours(h,m,0,0); return d;
+}
+
+async function confirmBooking(){
+  if(!pendingBooking) return;
+  const subject=$("#mSubject").value.trim()||"Ad-hoc Buchung";
+  const start=timeToDate($("#mStart").value);
+  const end=timeToDate($("#mEnd").value);
+  const err=$("#mErr");
+  if(!(end>start)){ err.textContent="Ende muss nach dem Start liegen."; return; }
+  if(start < new Date(Date.now()-60000)){ err.textContent="Start liegt in der Vergangenheit."; return; }
+
+  $("#mConfirm").disabled=true; err.textContent="";
+  try{
+    await createBooking(pendingBooking.room, subject, start, end);
+    closeModal();
+    toast("Raum gebucht ✓");
+    await loadAll();
+  }catch(ex){
+    err.textContent=ex.message||"Buchung fehlgeschlagen.";
+  }finally{
+    $("#mConfirm").disabled=false;
+  }
+}
+
+/* ============================================================
+   5) LADEN
+   ============================================================ */
+async function loadAll(){
+  if(!isConfigured()){ showSetup(); return; }
+  if(!account){ buildSkeleton(); }
+  const token = await getToken();
+  if(!token) return; // Redirect läuft
+
+  buildSkeleton();
+  const results = await Promise.allSettled(CONFIG.rooms.map(r=>fetchRoom(r,token)));
+  results.forEach((res,i)=>{
+    const room=CONFIG.rooms[i];
+    if(res.status==="fulfilled") renderRoom(room,res.value);
+    else renderError(room, res.reason?.message||"Fehler");
   });
 }
 
-function fetchRoomEvents(token, roomEmail, dateStr) {
-  var startLocal = new Date(dateStr + "T06:00:00");
-  var endLocal = new Date(dateStr + "T22:00:00");
-  var url = "https://graph.microsoft.com/v1.0/users/" + encodeURIComponent(roomEmail) + "/calendar/calendarView"
-    + "?startDateTime=" + startLocal.toISOString()
-    + "&endDateTime=" + endLocal.toISOString()
-    + "&$select=subject,start,end,organizer"
-    + "&$top=50";
-  return fetch(url, { headers: { Authorization: "Bearer " + token } })
-    .then(function(resp) {
-      if (resp.status === 403) { log("403 Kein Zugriff: " + roomEmail); return []; }
-      if (resp.status === 404) { log("404 Nicht gefunden: " + roomEmail); return []; }
-      if (!resp.ok) {
-        return resp.text().then(function(txt) {
-          log(resp.status + " bei " + roomEmail + ": " + txt.substring(0, 200));
-          return [];
-        });
-      }
-      return resp.json().then(function(data) {
-        log(roomEmail + ": " + data.value.length + " Termin(e)");
-        return data.value || [];
-      });
-    })
-    .catch(function(e) {
-      log("Fetch Fehler bei " + roomEmail + ": " + e.message);
-      return [];
-    });
+function showSetup(){
+  $("#board").innerHTML=`
+    <div class="notice">
+      <h2>Einrichtung erforderlich</h2>
+      <p>Trage zuerst <code>tenantId</code> und <code>clientId</code> oben im <code>CONFIG</code>-Block in <code>index.html</code> ein.</p>
+      <p>Hinterlege in der Azure-App-Registrierung unter <b>Authentifizierung → Single-Page-Application</b> exakt diese Redirect-URI:</p>
+      <p><code id="ru"></code></p>
+      <p>Berechtigung (delegiert): <code>Calendars.ReadWrite.Shared</code>, <code>User.Read</code>, <code>openid</code>.</p>
+    </div>`;
+  $("#ru").textContent = window.location.origin + window.location.pathname;
 }
 
-function loadBookings() {
-  var dateStr = document.getElementById("datePicker").value;
-  ```javascript
-  if (!dateStr) return;
-  setStatus("Lade Buchungen fuer " + formatDateLabel(dateStr) + " ...", "info");
-  getToken().then(function(token) {
-    var allEvents = [];
-    var promises = CONFIG.rooms.map(function(room) {
-      return fetchRoomEvents(token, room.email, dateStr).then(function(events) {
-        events.forEach(function(ev) {
-          var startH = isoToLocalHours(ev.start.dateTime);
-          var endH = isoToLocalHours(ev.end.dateTime);
-          allEvents.push({
-            room: room.name,
-            subject: ev.subject || "(kein Titel)",
-            organizer: (ev.organizer && ev.organizer.emailAddress)
-              ? (ev.organizer.emailAddress.name || ev.organizer.emailAddress.address)
-              : "-",
-            start: startH,
-            end: endH,
-            startLabel: hoursToTime(startH),
-            endLabel: hoursToTime(endH)
-          });
-        });
-      });
-    });
-    Promise.all(promises).then(function() {
-      if (allEvents.length === 0) {
-        setStatus("Keine Buchungen am " + formatDateLabel(dateStr) + " gefunden.", "success");
-        document.getElementById("vega-chart").innerHTML = "<p style='text-align:center;padding:60px;color:#aaa;font-size:1.1rem;'>Keine Buchungen fuer diesen Tag.</p>";
-        return;
-      }
-      setStatus(allEvents.length + " Buchung(en) geladen - " + formatDateLabel(dateStr), "success");
-      renderChart(allEvents, dateStr);
-    });
-  }).catch(function(e) {
-    setStatus("Fehler: " + e.message, "error");
-    log("loadBookings Fehler: " + e.message);
-  });
+/* ============================================================
+   6) INIT
+   ============================================================ */
+function setToday(){
+  const d=new Date();
+  const fmt=d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  $("#todayLabel").textContent=fmt;
+}
+function startAutoRefresh(){
+  clearInterval(refreshTimer);
+  refreshTimer=setInterval(()=>{ if(account) loadAll(); }, CONFIG.autoRefreshSec*1000);
 }
 
-function isoToLocalHours(isoString) {
-  var d = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
-  return d.getHours() + d.getMinutes() / 60;
-}
+window.addEventListener("DOMContentLoaded", async ()=>{
+  setToday();
+  $("#authBtn").onclick=()=> account? signOut() : signIn();
+  $("#refreshBtn").onclick=()=> loadAll();
+  $("#mCancel").onclick=closeModal;
+  $("#mConfirm").onclick=confirmBooking;
+  $("#overlay").onclick=e=>{ if(e.target.id==="overlay") closeModal(); };
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 
-function hoursToTime(h) {
-  var hh = Math.floor(h).toString().padStart(2, "0");
-  var mm = Math.round((h % 1) * 60).toString().padStart(2, "0");
-  return hh + ":" + mm;
-}
-
-function renderChart(data, dateStr) {
-  var roomOrder = CONFIG.rooms.map(function(r) { return r.name; });
-  var today = new Date().toISOString().split("T")[0];
-  var now = new Date();
-  var nowH = now.getHours() + now.getMinutes() / 60;
-  var showNowLine = (dateStr === today && nowH >= 6 && nowH <= 22);
-  var barLayer = {
-    mark: { type: "bar", cornerRadius: 3, height: { band: 0.75 } },
-    encoding: {
-      y: {
-        field: "room", type: "nominal", sort: roomOrder,
-        axis: { title: "Raum", labelFontSize: 12, titleFontSize: 13 }
-      },
-      x: {
-        field: "start", type: "quantitative",
-        scale: { domain: [6, 22] },
-        axis: {
-          title: "Uhrzeit", tickCount: 17,
-          labelFontSize: 11, titleFontSize: 13,
-          labelExpr: "datum.value % 1 === 0 ? (datum.value < 10 ? '0' : '') + datum.value + ':00' : ''"
-        }
-      },
-      x2: { field: "end" },
-      color: {
-        field: "room", type: "nominal",
-        scale: {
-          domain: roomOrder,
-          range: ["#009fe4","#00bb7e","#e6007c","#7d55c7","#ff7f41","#f0c000","#333333","#00a0af","#a0c840"]
-        },
-        legend: { title: "Raum", orient: "right", labelFontSize: 11 }
-      },
-      tooltip: [
-        { field: "room", type: "nominal", title: "Raum" },
-        { field: "subject", type: "nominal", title: "Besprechung" },
-        { field: "organizer", type: "nominal", title: "Organisator" },
-        { field: "startLabel", type: "nominal", title: "Start" },
-        { field: "endLabel", type: "nominal", title: "Ende" }
-      ]
-    }
-  };
-  var nowLayer = {
-    data: { values: [{ now: nowH }] },
-    mark: { type: "rule", color: "red", strokeWidth: 2, strokeDash: [4, 3] },
-    encoding: {
-      x: { field: "now", type: "quantitative" },
-      tooltip: [{ field: "now", title: "Jetzt", type: "quantitative" }]
-    }
-  };
-  var spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    title: {
-      text: "Building K012 - Raumbuchungen - " + formatDateLabel(dateStr),
-      fontSize: 15, font: "Arial"
-    },
-    width: "container",
-    height: 420,
-    data: { values: data },
-    layer: showNowLine ? [barLayer, nowLayer] : [barLayer],
-    config: {
-      view: { stroke: "#e0e0e0" },
-      axis: { grid: true, gridColor: "#f0f0f0" },
-      background: "#ffffff"
-    }
-  };
-  vegaEmbed("#vega-chart", spec, { renderer: "svg", actions: false })
-    .catch(function(err) { setStatus("Chart-Fehler: " + err.message, "error"); });
-}
-
-function setStatus(msg, type) {
-  var el = document.getElementById("status");
-  el.textContent = msg;
-  el.className = type || "";
-}
-
+  if(!isConfigured()){ showSetup(); return; }
+  try{
+    await initAuth();
+    await loadAll();
+    startAutoRefresh();
+  }catch(ex){
+    toast("Anmeldung fehlgeschlagen: "+(ex.message||ex), true);
+    console.error(ex);
+  }
+});
 </script>
-</body```html
->
+</body>
 </html>
