@@ -149,19 +149,27 @@ function signIn() {
   btn.disabled = true;
   btn.textContent = "Anmeldung laeuft...";
   log("Login gestartet...");
+
   msalInstance.loginPopup({ scopes: scopes, prompt: "select_account" }).then(function(response) {
     log("Popup-Login OK: " + response.account.username);
     onSignedIn(response.account);
   }).catch(function(popupErr) {
     log("Popup fehlgeschlagen: " + popupErr.errorCode + " - " + popupErr.message);
-    log("Versuche Redirect...");
-    msalInstance.loginRedirect({ scopes: scopes, prompt: "select_account" }).catch(function(redirectErr) {
-      log("Redirect fehlgeschlagen: " + redirectErr.message);
-      btn.disabled = false;
-      btn.textContent = "Mit Microsoft anmelden";
-    });
+    
+    // Warte 500ms und loesche State bevor Redirect
+    setTimeout(function() {
+      sessionStorage.clear();
+      localStorage.clear();
+      log("Versuche Redirect nach State-Reset...");
+      msalInstance.loginRedirect({ scopes: scopes, prompt: "select_account" }).catch(function(redirectErr) {
+        log("Redirect fehlgeschlagen: " + redirectErr.message);
+        btn.disabled = false;
+        btn.textContent = "Mit Microsoft anmelden";
+      });
+    }, 500);
   });
 }
+
 
 function onSignedIn(account) {
   currentAccount = account;
