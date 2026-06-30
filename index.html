@@ -366,7 +366,8 @@ function buildSkeleton(){
     board.appendChild(lane);
   });
 }
-function roomShort(room){ return (room.split("@")[0]||room).replace(/_/g," "); }
+function roomShort(room){ 
+  return (CONFIG.roomNames?.[room] || (room.split "@") [0]||room.replace(/_/g,"");
 
 function buildAxis(){
   const {s}=dayBounds();
