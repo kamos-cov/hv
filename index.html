@@ -205,17 +205,17 @@ const CONFIG = {
   clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1", // Anwendungs-(Client-)ID der App-Registrierung
 
   // Deine 10 Räume. Bei Bedarf erweitern (RES_13900 ... RES_13999).
-  rooms: [
-    "RES_14128@covestro.com" : "LEV_K12_05_501 P:8 A: Hybrid",
-    "RES_13900@covestro.com" : "LEV_K12_05_502 P:12 A: Hybrid",
-    "RES_14170@covestro.com" : "LEV_K12_05_509 P:16 A: Beamer",
-    "RES_13844@covestro.com" : "LEV_K12_05_510 P:18) A: Hybrid",
-    "RES_14171@covestro.com" : "LEV_K12_05_521 P:10) A: Hybrid",
-    "RES_14172@covestro.com" : "LEV_K12_05_522 P:5) A: Hybrid",
-    "RES_14173@covestro.com" : "LEV_K12_05_530 P:5) A: Hybrid",
-    "RES_14175@covestro.com" : "LEV_K12_05_572 P:16) A: Hybrid",
-    "RES_14174@covestro.com" : "LEV_K12_05_550 P:8 A: Hybrid",
-  ],
+  rooms: {
+    "RES_14128@covestro.com": "LEV_K12_05_501 P:8 A: Hybrid",
+    "RES_13900@covestro.com": "LEV_K12_05_502 P:12 A: Hybrid",
+    "RES_14170@covestro.com": "LEV_K12_05_509 P:16 A: Beamer",
+    "RES_13844@covestro.com": "LEV_K12_05_510 P:18) A: Hybrid",
+    "RES_14171@covestro.com": "LEV_K12_05_521 P:10) A: Hybrid",
+    "RES_14172@covestro.com": "LEV_K12_05_522 P:5) A: Hybrid",
+    "RES_14173@covestro.com": "LEV_K12_05_530 P:5) A: Hybrid",
+    "RES_14175@covestro.com": "LEV_K12_05_572 P:16) A: Hybrid",
+    "RES_14174@covestro.com": "LEV_K12_05_550 P:8 A: Hybrid",
+  },
   dayStartHour: 7,        // Anfang der Zeitleiste
   dayEndHour: 20,         // Ende der Zeitleiste
   slotMinutes: 15,        // Raster + Standard-Buchungsdauer-Schritt
@@ -367,7 +367,7 @@ function buildSkeleton(){
   });
 }
 function roomShort(room){ 
-  return (CONFIG.roomNames?.[room] || (room.split "@") [0]||room.replace(/_/g,"");
+  return (CONFIG.roomNames?.[room] || (room.split ("@") [0]||room).replace(/_/g,"");
 
 function buildAxis(){
   const {s}=dayBounds();
