@@ -228,7 +228,7 @@ const CONFIG = {
 
 const GRAPH = "https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgraph.microsoft.com%2Fv1.0&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294771566%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=1f6ThRJ0rJW7gMWceKKA%2FVhjtbBI01dvfphHRUBPCdU%3D&reserved=0";
 const SCOPES = ["User.Read", "Calendars.ReadWrite.Shared"];
-
+                              
 let msalInstance = null;
 let account = null;
 let refreshTimer = null;
@@ -271,8 +271,8 @@ function toast(msg, bad=false){
 async function initAuth(){
   msalInstance = new msal.PublicClientApplication({
     auth:{
-      clientId: CONFIG.clientId,
-      authority: `https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Flogin.microsoftonline.com%2F%24&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294789736%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=Lt5XbmGuJtT4fbAB39qmP4PCIsFSyXnXNvdYcdU8G7Q%3D&reserved=0{CONFIG.tenantId}`,
+      clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1", /* CONFIG.clientId, */
+      authority: "https://login.microsoftonline.com/0468bc4a-134c-4fb0-b843-a2a3d583e919", /*`https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Flogin.microsoftonline.com%2F%24&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294789736%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=Lt5XbmGuJtT4fbAB39qmP4PCIsFSyXnXNvdYcdU8G7Q%3D&reserved=0{CONFIG.tenantId}`,*/
       redirectUri: window.location.origin + window.location.pathname,
     },
     cache:{ cacheLocation:"localStorage", storeAuthStateInCookie:false },
