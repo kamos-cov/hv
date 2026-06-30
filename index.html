@@ -75,10 +75,9 @@ function initApp() {
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js" onload="log('MSAL geladen')" onerror="log('FEHLER: MSAL nicht geladen')"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega@5" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6" onload="log('VegaEmbed geladen');initApp()" onerror="log('FEHLER: VegaEmbed nicht geladen')"></script>
-
+<script src="https://unpkg.com/vega@5/build/vega.min.js" onload="log('Vega geladen')" onerror="log('FEHLER: Vega nicht geladen')"></script>
+<script src="https://unpkg.com/vega-lite@5/build/vega-lite.min.js" onload="log('VegaLite geladen')" onerror="log('FEHLER: VegaLite nicht geladen')"></script>
+<script src="https://unpkg.com/vega-embed@6/build/vega-embed.min.js" onload="log('VegaEmbed geladen');initApp()" onerror="log('FEHLER: VegaEmbed nicht geladen')"></script>
 <script>
 var CONFIG = {
   clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1",
