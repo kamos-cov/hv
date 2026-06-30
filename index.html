@@ -101,19 +101,12 @@ var currentAccount = null;
 var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 
 async function startMsal() {
-  try {
-    log("Erstelle MSAL-Instanz...");
-      // Alten Interaction-State loeschen
-    sessionStorage.clear();
-    msalInstance = new msal.PublicClientApplication({
-      auth: {
-        clientId: CONFIG.clientId,
-        authority: "https://login.microsoftonline.com/" + CONFIG.tenantId,
-        redirectUri: CONFIG.redirectUri
-      },
-      cache: {
-        cacheLocation: "sessionStorage",
-        storeAuthStateInCookie: true
+    try {
+    // Alten State loeschen beim ersten Start
+    var keys = Object.keys(sessionStorage);
+    keys.forEach(function(key) {
+      if (key.indexOf("msal") !== -1) {
+        sessionStorage.removeItem(key);
       }
     });
     log("Initialisiere MSAL...");
@@ -144,24 +137,41 @@ async function startMsal() {
 }
 
 function signIn() {
-  if (!msalInstance) { log("MSAL noch nicht bereit!"); return; }
-  var btn = document.getElementById("login-btn");
-  btn.disabled = true;
-  btn.textContent = "Anmeldung laeuft...";
-  log("Login per Redirect gestartet...");
+  log("Login gestartet - loesche Cache...");
   
+  // Alles loeschen
   sessionStorage.clear();
   localStorage.clear();
   
-  msalInstance.loginRedirect({ 
-    scopes: scopes, 
-    prompt: "select_account" 
-  }).catch(function(e) {
-    log("Redirect Fehler: " + e.message);
-    btn.disabled = false;
-    btn.textContent = "Mit Microsoft anmelden";
-  });
+  // Kurz warten dann komplett neu starten
+  setTimeout(function() {
+    msalInstance = new msal.PublicClientApplication({
+      auth: {
+        clientId: CONFIG.clientId,
+        authority: "https://login.microsoftonline.com/" + CONFIG.tenantId,
+        redirectUri: CONFIG.redirectUri
+      },
+      cache: {
+        cacheLocation: "sessionStorage",
+        storeAuthStateInCookie: true
+      }
+    });
+    
+    msalInstance.initialize().then(function() {
+      log("MSAL neu initialisiert - starte Redirect...");
+      return msalInstance.loginRedirect({ 
+        scopes: scopes, 
+        prompt: "select_account" 
+      });
+    }).catch(function(e) {
+      log("Fehler: " + e.message);
+      var btn = document.getElementById("login-btn");
+      btn.disabled = false;
+      btn.textContent = "Mit Microsoft anmelden";
+    });
+  }, 300);
 }
+
 
 
 
