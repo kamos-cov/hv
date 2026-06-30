@@ -103,6 +103,8 @@ var scopes = ["openid", "profile", "Calendars.Read", "Calendars.Read.Shared"];
 async function startMsal() {
   try {
     log("Erstelle MSAL-Instanz...");
+      // Alten Interaction-State loeschen
+    sessionStorage.clear();
     msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId: CONFIG.clientId,
