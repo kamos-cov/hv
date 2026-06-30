@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Raumbelegung · Meetingräume</title>
-<link rel="preconnect" href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.googleapis.com%2F&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294685480%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=m0maNyKkAyhi8ihAQbncuNU5AvEatqHn8tFovrxV5uQ%3D&reserved=0" />
-<link rel="preconnect" href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.gstatic.com%2F&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294715983%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=ubFifhgFSSkp92m4DXGcAKkZdf6WwoJ8W4ZvEiPLe4w%3D&reserved=0" crossorigin />
-<link href="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Ffonts.googleapis.com%2Fcss2%3Ffamily%3DSpace%2BGrotesk%3Awght%40500%3B600%3B700%26family%3DInter%3Awght%40400%3B500%3B600%26family%3DJetBrains%2BMono%3Awght%40400%3B500%26display%3Dswap&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294734822%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=aWigDlsSTHrixnsFnCbMx4LxAWiwNY38X7e0xLiHVlU%3D&reserved=0" rel="stylesheet" />
-<script src="https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40azure%2Fmsal-browser%403.27.0%2Flib%2Fmsal-browser.min.js&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294753162%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=oKyRHa8TAxPtD%2BIl2b5Sfnt3jQm4vc8fgZJPDv3wG3E%3D&reserved=0"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.google.apis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono;wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@03.27.0/lib/msal-browser.min.js"></script>
 <style>
   :root{
     --bg:#E9ECEF; --surface:#FFFFFF; --ink:#181B1F; --muted:#646E78;
@@ -225,8 +225,8 @@ const CONFIG = {
   autoRefreshSec: 60,
 };
 /* ============================================================ */
-
-const GRAPH = "https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgraph.microsoft.com%2Fv1.0&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294771566%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=1f6ThRJ0rJW7gMWceKKA%2FVhjtbBI01dvfphHRUBPCdU%3D&reserved=0";
+const GRAPH ="https://graph.microsoft.com/v1.0";
+/* const GRAPH = "https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgraph.microsoft.com%2Fv1.0&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294771566%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=1f6ThRJ0rJW7gMWceKKA%2FVhjtbBI01dvfphHRUBPCdU%3D&reserved=0"; */
 const SCOPES = ["User.Read", "Calendars.ReadWrite.Shared"];
                               
 let msalInstance = null;
