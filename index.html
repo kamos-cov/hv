@@ -215,17 +215,18 @@ const CONFIG = {
     "RES_14173@covestro.com",
     "RES_14175@covestro.com",
     "RES_14174@covestro.com",
+    "RES_13907@covestro.com",
   ],
   roomNames: {
-    "RES_14128@covestro.com": "LEV_K12_05_501 P:8 A: Hybrid",
-    "RES_13900@covestro.com": "LEV_K12_05_502 P:12 A: Hybrid",
-    "RES_14170@covestro.com": "LEV_K12_05_509 P:16 A: Beamer",
-    "RES_13844@covestro.com": "LEV_K12_05_510 P:18) A: Hybrid",
-    "RES_14171@covestro.com": "LEV_K12_05_521 P:10) A: Hybrid",
-    "RES_14172@covestro.com": "LEV_K12_05_522 P:5) A: Hybrid",
-    "RES_14173@covestro.com": "LEV_K12_05_530 P:5) A: Hybrid",
-    "RES_14175@covestro.com": "LEV_K12_05_572 P:16) A: Hybrid",
-    "RES_14174@covestro.com": "LEV_K12_05_550 P:8 A: Hybrid",
+    "RES_14128@covestro.com": "Raum 501 P-8 A-Hybrid",
+    "RES_13900@covestro.com": "Raum 502 P-12 A-Hybrid",
+    "RES_14170@covestro.com": "Raum 509 P-16 A-Beamer",
+    "RES_13844@covestro.com": "Raum 510 P-18 A-Hybrid",
+    "RES_14171@covestro.com": "Raum 521 P-10 A-Hybrid",
+    "RES_14172@covestro.com": "Raum 522 P-5 A-Hybrid",
+    "RES_14173@covestro.com": "Raum 530 P-5 A-Hybrid",
+    "RES_14175@covestro.com": "Raum 572 P-16 A-Hybrid",
+    "RES_14174@covestro.com": "Raum 550 P-8 A-Hybrid",
   }
   dayStartHour: 7,        // Anfang der Zeitleiste
   dayEndHour: 20,         // Ende der Zeitleiste
@@ -378,7 +379,7 @@ function buildSkeleton(){
   });
 }
 function roomShort(room){ 
-  return (CONFIG.roomNames?.[room] || (room.split ("@") [0]||room).replace(/_/g,"");
+  return (CONFIG.roomNames?.[room] || (room.split ("@") [0]||room).replace(/_/g," ");
 
 function buildAxis(){
   const {s}=dayBounds();
