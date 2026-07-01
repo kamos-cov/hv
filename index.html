@@ -504,7 +504,8 @@ function renderRoom(room, events){
     if(right<=left) return;
     const b=document.createElement("div"); b.className="block";
     b.style.left=left+"%"; b.style.width=(right-left)+"%";
-    b.innerHTML=`<div class="bt">${escapeHtml(ev.subject)}</div>
+   // b.innerHTML=`<div class="bt">${escapeHtml(ev.subject)}</div>
+     b.innerHTML=`<div class="bt">Belegt</div>
                  <div class="bh mono">${hhmm(ev.start)}–${hhmm(ev.end)}</div>`;
     b.addEventListener("click",e=>{ e.stopPropagation(); }); // belegt = nicht buchbar
     track.appendChild(b);
