@@ -343,13 +343,18 @@ async function fetchRoom(room, token){
 
 async function createBooking(room, subject, start, end){
   const token = await getToken(); if(!token) return false;
-  const res = await fetch(`${GRAPH}/users/${encodeURIComponent(room)}/events`,{
+ /* const res = await fetch(`${GRAPH}/users/${encodeURIComponent(room)}/events`,{ */
+  const res = await fetch (`${GRAPH}/me/events`,{
     method:"POST",
     headers:{ Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
     body: JSON.stringify({
       subject,
       start:{ dateTime: localNaive(start), timeZone: CONFIG.timeZone },
       end:{   dateTime: localNaive(end),   timeZone: CONFIG.timeZone },
+      location:{ displayName: roomShort(room) },
+      attendees:[
+        { emailAdress:{ adress: room, name: roomShort(room) }, type:"resource" }
+      ],
     })
   });
   if(!res.ok){
