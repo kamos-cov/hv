@@ -74,6 +74,13 @@
   .lane .label{padding:14px 16px; border-right:1px solid var(--hair); display:flex; flex-direction:column; gap:6px; justify-content:center}
   .lane .label .rn{font-family:"Space Grotesk"; font-weight:600; font-size:15px}
   .lane .label .rsub{font-size:11.5px; color:var(--muted)}
+   .lane .label .meta{display:flex; flex-direction:column; gap:5px; margin:1px 0}
+  .meta .cap{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); font-weight:500}
+  .meta .cap svg{width:15px; height:15px; flex:none}
+  .meta .equip{display:flex; align-items:center; gap:9px; color:var(--muted)}
+  .meta .equip svg{width:17px; height:17px}
+  .meta .ei{display:inline-flex}
+  .meta .ei-txt{font-size:11px; padding:1px 6px; background:#EEF1F4; border-radius:5px}
   .pill{align-self:flex-start; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px}
   .pill.free{background:var(--free-soft); color:#0c6f60}
   .pill.booked{background:var(--booked-soft); color:#8f3a30}
@@ -216,6 +223,7 @@ const CONFIG = {
     "RES_14175@covestro.com",
     "RES_14174@covestro.com",
   ],
+  /*
   roomNames: {
     "RES_14128@covestro.com": "Raum 501 P-8 A-Hybrid",
     "RES_13900@covestro.com": "Raum 502 P-12 A-Hybrid",
@@ -226,7 +234,14 @@ const CONFIG = {
     "RES_14173@covestro.com": "Raum 530 P-5 A-Hybrid",
     "RES_14175@covestro.com": "Raum 572 P-16 A-Hybrid",
     "RES_14174@covestro.com": "Raum 550 P-8 A-Hybrid",
-  },
+  }, */
+  roomInfo; {
+    "RES_14128@covestro.com" : {
+      name: "Raum 501",
+      capacity: 8,
+      eqquiment: ["camera", "monitor", "speaker"],
+      },
+},
   dayStartHour: 7,        // Anfang der Zeitleiste
   dayEndHour: 20,         // Ende der Zeitleiste
   slotMinutes: 15,        // Raster + Standard-Buchungsdauer-Schritt
@@ -376,9 +391,14 @@ function buildSkeleton(){
   CONFIG.rooms.forEach(room=>{
     const lane=document.createElement("div"); lane.className="lane";
     lane.innerHTML=`
-      <div class="label">
+      /* <div class="label">
         <div class="rn">${roomShort(room)}</div>
         <div class="rsub mono">${room}</div>
+        <span class="pill" data-pill>…</span>
+      </div> */
+      <div class="label">
+        <div class="rn">${roomShort(room)}</div>
+        ${roomMeta(room)}
         <span class="pill" data-pill>…</span>
       </div>
       <div class="track skeleton" data-track="${room}"></div>`;
@@ -386,9 +406,45 @@ function buildSkeleton(){
   });
 }
 /*  function roomShort(room){ return (room.split("@")[0]||room).replace(/_/g," "); }
-*/
-function roomShort(room){ return CONFIG.roomNames?.[room] || (room.split("@")[0]||room).replace(/_/g," ");}
 
+function roomShort(room){ return CONFIG.roomNames?.[room] || (room.split("@")[0]||room).replace(/_/g," ");}
+*/
+function roomShort(room){
+  return CONFIG.roomInfo?.[room]?.name
+      || CONFIG.roomNames?.[room]
+      || (room.split("@")[0] || room).replace(/_/g," ");
+}
+
+const CAP_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg>`;
+
+const ICONS = {
+  camera:     {label:"Kamera",       svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 10.5 21 7v10l-6-3.5"/></svg>`},
+  monitor:    {label:"Monitor",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></svg>`},
+  speaker:    {label:"Lautsprecher", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>`},
+  tv:         {label:"Display",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="12" rx="1.5"/><path d="M8 21h8"/></svg>`},
+  phone:      {label:"Konferenztelefon", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>`},
+  whiteboard: {label:"Whiteboard",   svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20l1.5-4M15 20l-1.5-4"/></svg>`},
+  wifi:       {label:"WLAN",         svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a11 11 0 0 1 14 0M8 12.5a6.5 6.5 0 0 1 8 0"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>`},
+};
+
+function equipmentIcons(list){
+  if(!list || !list.length) return "";
+  return `<div class="equip">` + list.map(k=>{
+    const ic = ICONS[k];
+    return ic ? `<span class="ei" title="${ic.label}" aria-label="${ic.label}">${ic.svg}</span>`
+              : `<span class="ei-txt">${escapeHtml(k)}</span>`;
+  }).join("") + `</div>`;
+}
+
+function roomMeta(room){
+  const info = CONFIG.roomInfo?.[room];
+  if(!info) return `<div class="rsub mono">${room}</div>`; // Fallback: alte E-Mail-Zeile
+  let html = `<div class="meta">`;
+  if(info.capacity) html += `<div class="cap">${CAP_ICON}<span>${info.capacity} Pers.</span></div>`;
+  html += equipmentIcons(info.equipment);
+  return html + `</div>`;
+}
+  
 function buildAxis(){
   const {s}=dayBounds();
   const wrap=document.createElement("div"); wrap.className="axis";
