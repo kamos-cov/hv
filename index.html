@@ -342,23 +342,26 @@ async function fetchRoom(room, token){
 
 async function createBooking(room, subject, start, end){
   const token = await getToken(); if(!token) return false;
- /* const res = await fetch(`${GRAPH}/users/${encodeURIComponent(room)}/events`,{ */
-  const res = await fetch (`${GRAPH}/me/events`,{
-    method:"POST",
-    headers:{ Authorization:`Bearer ${token}`, "Content-Type":"application/json" },
-    body: JSON.stringify({
-      subject,
-      start:{ dateTime: localNaive(start), timeZone: CONFIG.timeZone },
-      end:{   dateTime: localNaive(end),   timeZone: CONFIG.timeZone },
-      location:{ displayName: roomShort(room) },
-      attendees:[
-        { emailAdress:{ adress: room, name: roomShort(room) }, type:"resource" }
-      ],
-    })
+  const body = {
+    subject: String(subject),
+    start: { dateTime: localNaive(start), timeZone: CONFIG.timeZone },
+    end:   { dateTime: localNaive(end),   timeZone: CONFIG.timeZone },
+    location: { displayName: roomShort(room) },
+    attendees: [
+      { emailAddress: { address: room, name: roomShort(room) }, type: "resource" }
+    ]
+  };
+  console.log("Buchungs-Body:", JSON.stringify(body));   // zum Prüfen
+  const res = await fetch(`${GRAPH}/me/events`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
   });
   if(!res.ok){
+    const raw = await res.text();
+    console.error("Graph-Fehler:", res.status, raw);      // vollständige Meldung
     let msg = `Fehler ${res.status}`;
-    try{ const j=await res.json(); if(j.error?.message) msg=j.error.message; }catch(_){}
+    try { const j = JSON.parse(raw); if(j.error?.message) msg = j.error.message; } catch(_){}
     throw new Error(msg);
   }
   return true;
