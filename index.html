@@ -75,6 +75,10 @@
   .lane .label .rn{font-family:"Space Grotesk"; font-weight:600; font-size:15px}
   .lane .label .rsub{font-size:11.5px; color:var(--muted)}
   .lane .label .meta{display:flex; flex-direction:column; gap:5px; margin:1px 0}
+  .lane .label .rhead{display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .lane .label .rhead .rn{margin:0}
+  .lane .label .rhead .pill{align-self:auto}
+  
   .meta .cap{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); font-weight:500}
   .meta .cap svg{width:15px; height:15px; flex:none}
   .meta .equip{display:flex; align-items:center; gap:9px; color:var(--muted)}
@@ -420,9 +424,11 @@ function buildSkeleton(){
     const lane=document.createElement("div"); lane.className="lane";
     lane.innerHTML=`
       <div class="label">
-        <div class="rn">${roomShort(room)}</div>
+        <div class="rhead">
+          <div class="rn">${roomShort(room)}</div>
+          <span class="pill" data-pill>…</span>
+        </div>
         ${roomMeta(room)}
-        <span class="pill" data-pill>…</span>
       </div>
       <div class="track skeleton" data-track="${room}"></div>`;
     board.appendChild(lane);
@@ -678,6 +684,138 @@ window.addEventListener("DOMContentLoaded", async ()=>{
     console.error(ex);
   }
 });
+/* ============================================================
+   KIOSK-SELBSTHEILUNG  
+   Überschreibt getToken / loadAll / startAutoRefresh
+   ============================================================ */
+let kFailStreak = 0;
+let kBoardReady = false;
+let kNeedSignIn = false;
+const kLastEvents = {};
+
+/* --- Token: bei Ablauf NICHT automatisch weiterleiten, sondern Overlay zeigen --- */
+async function getToken(){
+  if(!account) account = msalInstance.getAllAccounts()[0] || null;
+  if(!account){ showAuthGate(); return null; }
+  try{
+    const r = await msalInstance.acquireTokenSilent({ scopes:SCOPES, account });
+    kNeedSignIn = false; hideAuthGate();
+    return r.accessToken;
+  }catch(e){
+    const code = String(e && (e.errorCode || e.name || ""));
+    const interactive = /interaction_required|login_required|consent_required|InteractionRequiredAuthError|no_account/i.test(code);
+    if(interactive){ kNeedSignIn = true; showAuthGate(); return null; }
+    throw e; // vermutlich Netz -> als Ladefehler behandeln
+  }
+}
+
+/* --- Laden mit "letzter guter Stand bleibt stehen" --- */
+async function loadAll(){
+  if(!isConfigured()){ showSetup(); return; }
+  let token;
+  try{ token = await getToken(); }
+  catch(e){ onLoadOutcome(false); return; }
+  if(!token) return; // Anmelde-Overlay ist aktiv – kein Fehlerzustand
+
+  if(!kBoardReady){ buildSkeleton(); kBoardReady = true; }
+
+  const results = await Promise.allSettled(CONFIG.rooms.map(r=>fetchRoom(r,token)));
+  let anyOk = false;
+  results.forEach((res,i)=>{
+    const room = CONFIG.rooms[i];
+    if(res.status === "fulfilled"){
+      kLastEvents[room] = res.value;
+      renderRoom(room, res.value);
+      anyOk = true;
+    } else {
+      if(kLastEvents[room]) renderRoom(room, kLastEvents[room]); // alten Stand halten
+      else renderError(room, res.reason?.message || "Fehler");
+    }
+  });
+  onLoadOutcome(anyOk);
+}
+
+function onLoadOutcome(ok){
+  if(ok){ kFailStreak = 0; setStatus("ok"); }
+  else{
+    kFailStreak++;
+    setStatus(navigator.onLine ? "stale" : "offline");
+    if(kFailStreak >= (CONFIG.reloadOnErrorsAfter || 10)) location.reload();
+  }
+}
+
+/* --- Selbstplanender Refresh-Loop (bricht bei Fehler nie ab) --- */
+function startAutoRefresh(){
+  clearTimeout(refreshTimer);
+  const tick = async ()=>{
+    try{ await loadAll(); }
+    catch(e){ onLoadOutcome(false); }
+    finally{ refreshTimer = setTimeout(tick, (CONFIG.autoRefreshSec || 60)*1000); }
+  };
+  refreshTimer = setTimeout(tick, (CONFIG.autoRefreshSec || 60)*1000);
+}
+
+/* --- Status-Chip + Anmelde-Overlay --- */
+function setStatus(state){
+  const chip = document.getElementById("kStatus"); if(!chip) return;
+  const dot = chip.querySelector(".kdot"); const txt = chip.querySelector(".ktxt");
+  if(state==="ok"){ dot.style.background="var(--free)"; txt.textContent="Aktualisiert "+hhmm(new Date()); }
+  else if(state==="stale"){ dot.style.background="var(--now)"; txt.textContent="Verbindung instabil…"; }
+  else { dot.style.background="var(--booked)"; txt.textContent="Keine Verbindung"; }
+}
+function showAuthGate(){ document.getElementById("kGate")?.classList.add("on"); }
+function hideAuthGate(){ document.getElementById("kGate")?.classList.remove("on"); }
+
+function scheduleNightlyReload(){
+  const h = (CONFIG.nightlyReloadHour ?? 3.5);
+  const now = new Date(); const next = new Date(now);
+  next.setHours(Math.floor(h), Math.round((h%1)*60), 0, 0);
+  if(next <= now) next.setDate(next.getDate()+1);
+  setTimeout(()=>location.reload(), next - now);
+}
+
+/* --- Einmalige Einrichtung: Styles, Chip, Overlay, Watchdogs --- */
+(function initKiosk(){
+  const css = `
+  .kstatus{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+    padding:6px 10px;border:1px solid var(--hair-strong);border-radius:8px;background:var(--surface)}
+  .kstatus .kdot{width:9px;height:9px;border-radius:50%;background:var(--free);flex:none;transition:.3s}
+  .kgate{position:fixed;inset:0;background:rgba(24,27,31,.92);display:none;align-items:center;
+    justify-content:center;z-index:100;padding:24px}
+  .kgate.on{display:flex}
+  .kgate-box{background:var(--surface);border-radius:18px;padding:40px 44px;text-align:center;
+    max-width:440px;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+  .kgate-title{font-family:"Space Grotesk";font-weight:700;font-size:24px;margin-bottom:10px}
+  .kgate-sub{color:var(--muted);font-size:15px;margin-bottom:26px;line-height:1.5}
+  .kgate-btn{background:var(--free);color:#fff;border:0;border-radius:12px;padding:16px 34px;
+    font-family:inherit;font-size:18px;font-weight:600;cursor:pointer;min-width:200px;min-height:56px}
+  .kgate-btn:active{filter:brightness(.95)}`;
+  const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+
+  const header = document.querySelector("header");
+  if(header){
+    const chip = document.createElement("div");
+    chip.id="kStatus"; chip.className="kstatus";
+    chip.innerHTML = `<span class="kdot"></span><span class="ktxt">…</span>`;
+    header.insertBefore(chip, document.getElementById("refreshBtn"));
+  }
+
+  const gate = document.createElement("div");
+  gate.id="kGate"; gate.className="kgate";
+  gate.innerHTML = `
+    <div class="kgate-box">
+      <div class="kgate-title">Anmeldung erforderlich</div>
+      <div class="kgate-sub">Die Sitzung ist abgelaufen. Zum Fortfahren bitte tippen.</div>
+      <button class="kgate-btn" id="kGateBtn">Anmelden</button>
+    </div>`;
+  document.body.appendChild(gate);
+  document.getElementById("kGateBtn").onclick = ()=>{ try{ signIn(); }catch(e){ location.reload(); } };
+
+  window.addEventListener("online",  ()=>{ setStatus("stale"); loadAll(); });
+  window.addEventListener("offline", ()=>{ setStatus("offline"); });
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll(); });
+  scheduleNightlyReload();
+})();
 </script>
 </body>
 </html>
