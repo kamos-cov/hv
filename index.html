@@ -28,6 +28,7 @@
   .mono{font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
 
   /* ---- Topbar ---- */
+  
   header{
     position:sticky; top:0; z-index:30;
     display:flex; align-items:center; gap:18px; flex-wrap:wrap;
@@ -43,6 +44,7 @@
   header .btn:hover{border-color:#5a616a}
   header .btn.primary{background:var(--free); border-color:var(--free); color:#fff}
   header .kstatus{background:#1c1f23; border-color:#3a3f45; color:#c2c8ce}
+  header #who, header #authBtn{ display:none;}
   
   .brand{display:flex; flex-direction:column; gap:1px}
   .brand b{font-family:"Space Grotesk"; font-weight:700; font-size:18px; letter-spacing:-.01em}
@@ -237,8 +239,6 @@ const CONFIG = {
     "RES_14173@covestro.com",
     "RES_14175@covestro.com",
     "RES_14174@covestro.com",
-    "RES_13988@covestro.com",
-    "RES_10061@covestro.com",
   ],
   roomInfo: {
     "RES_14128@covestro.com" : {
@@ -279,16 +279,6 @@ const CONFIG = {
       "RES_14175@covestro.com" : {
       name: "Raum 572",
       capacity: 16,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-      "RES_13988@covestro.com" : {
-      name: "Raum 006",
-      capacity: 8,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-     "RES_10061@covestro.com" : {
-      name: "Raum 010",
-      capacity: 8,
       equipment: ["monitor", "camera", "speaker"],
       },
 },
