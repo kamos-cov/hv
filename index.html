@@ -27,14 +27,30 @@
   }
   .mono{font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
 
-  /* ---- Topbar ---- */
+  /* ---- Topbar ----
   header{
     position:sticky; top:0; z-index:30;
     display:flex; align-items:center; gap:20px; flex-wrap:wrap;
     padding:14px 22px; background:rgba(233,236,239,.85);
     backdrop-filter:saturate(140%) blur(8px);
     border-bottom:1px solid var(--hair-strong);
+  } */
+  header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:12px 22px; background:#000;
+    border-bottom:1px solid #2a2e33;
   }
+  header .logo{height:40px; width:auto; border-radius:8px; display:block; flex:none}
+  header .brand b{color:#fff}
+  header .brand .date{color:#9aa2ab}
+  header .legend{color:#c2c8ce}
+  header .who{color:#9aa2ab}
+  header .btn{background:#1c1f23; border-color:#3a3f45; color:#e8ebee}
+  header .btn:hover{border-color:#5a616a}
+  header .btn.primary{background:var(--free); border-color:var(--free); color:#fff}
+  header .kstatus{background:#1c1f23; border-color:#3a3f45; color:#c2c8ce}
+  
   .brand{display:flex; flex-direction:column; gap:1px}
   .brand b{font-family:"Space Grotesk"; font-weight:700; font-size:18px; letter-spacing:-.01em}
   .brand .date{color:var(--muted); font-size:12.5px}
@@ -74,7 +90,8 @@
   .lane .label{padding:14px 16px; border-right:1px solid var(--hair); display:flex; flex-direction:column; gap:6px; justify-content:center}
   .lane .label .rn{font-family:"Space Grotesk"; font-weight:600; font-size:15px}
   .lane .label .rsub{font-size:11.5px; color:var(--muted)}
-  .lane .label .meta{display:flex; flex-direction:column; gap:5px; margin:1px 0}
+  /* .lane .label .meta{display:flex; flex-direction:column; gap:5px; margin:1px 0} */
+  .lane .label .meta{display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:6px 14px; margin:1px 0}
   .lane .label .rhead{display:flex; align-items:center; justify-content:space-between; gap:10px}
   .lane .label .rhead .rn{margin:0}
   .lane .label .rhead .pill{align-self:auto}
@@ -155,6 +172,7 @@
 <body>
 
 <header>
+  <img class "logo" scr="covestro_logo.png" alt="Covestro" />
   <div class="brand">
     <b>Raumbelegung K12 5.OG</b>
     <span class="date mono" id="todayLabel">–</span>
