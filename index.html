@@ -592,7 +592,7 @@ function handleTrackClick(e, track, room, events){
 
 /* ---------- Modal ---------- */
 function openModal(room, start, end){
-  pendingBooking = { room, events: (typeof kLastEvents!=="undefined" && kLastEvents[room]) || [] };
+  pendingBooking = { room, events: (typeof kLastEvents!="undefined" && kLastEvents[room]) || [] };
   $("#mRoom").textContent=`${roomShort(room)} · ${room}`;
   $("#mSubject").value="Ad-hoc Buchung";
   $("#mStart").value=hhmm(start);
