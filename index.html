@@ -610,29 +610,37 @@ function timeToDate(v){
 }
 
 async function confirmBooking(){
-  const snap = d => { const s=(CONFIG.slotMinutes||15); d.setMinutes(Math.round(d.getMinutes()/s)*s, 0, 0); return d; };
-  snap(start); snap(end);
-  $("#mStart").value = hhmm(start);   // gerundete Werte zurückschreiben
-  $("#mEnd").value   = hhmm(end);
-  
   if(!pendingBooking) return;
-  const subject=$("#mSubject").value.trim()||"Ad-hoc Buchung";
-  const start=timeToDate($("#mStart").value);
-  const end=timeToDate($("#mEnd").value);
-  const err=$("#mErr");
-  if(!(end>start)){ err.textContent="Ende muss nach dem Start liegen."; return; }
-  if(start < new Date(Date.now()-60000)){ err.textContent="Start liegt in der Vergangenheit."; return; }
-  
-  $("#mConfirm").disabled=true; err.textContent="";
+  const subject = $("#mSubject").value.trim() || "Ad-hoc Buchung";
+  let start = timeToDate($("#mStart").value);
+  let end   = timeToDate($("#mEnd").value);
+  const err = $("#mErr");
+
+  // auf 15-Minuten-Raster runden
+  const step = CONFIG.slotMinutes || 15;
+  const snap = d => { d.setMinutes(Math.round(d.getMinutes()/step)*step, 0, 0); return d; };
+  snap(start); snap(end);
+  $("#mStart").value = hhmm(start);
+  $("#mEnd").value   = hhmm(end);
+
+  // Grundprüfungen
+  if(!(end > start)){ err.textContent = "Ende muss nach dem Start liegen."; return; }
+  if(start < new Date(Date.now()-60000)){ err.textContent = "Start liegt in der Vergangenheit."; return; }
+
+  // Überlappung mit bestehenden Buchungen?
+  const clash = (pendingBooking.events||[]).some(ev => start < ev.end && end > ev.start);
+  if(clash){ err.textContent = "In diesem Zeitraum ist der Raum bereits belegt."; return; }
+
+  $("#mConfirm").disabled = true; err.textContent = "";
   try{
     await createBooking(pendingBooking.room, subject, start, end);
     closeModal();
     toast("Raum gebucht ✓");
     await loadAll();
   }catch(ex){
-    err.textContent=ex.message||"Buchung fehlgeschlagen.";
+    err.textContent = ex.message || "Buchung fehlgeschlagen.";
   }finally{
-    $("#mConfirm").disabled=false;
+    $("#mConfirm").disabled = false;
   }
 }
 
