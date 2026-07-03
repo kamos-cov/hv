@@ -591,6 +591,7 @@ function handleTrackClick(e, track, room, events){
 }
 
 /* ---------- Modal ---------- */
+/*
 function openModal(room, start, end){
   pendingBooking={room};
   $("#mRoom").textContent=`${roomShort(room)} · ${room}`;
@@ -601,6 +602,18 @@ function openModal(room, start, end){
   $("#overlay").classList.add("on");
   $("#mSubject").focus();
 }
+*/
+function openModal(room, start, end){
+  pendingBooking = { room, events: (typeof kLastEvents!=="undefined" && kLastEvents[room]) || [] };
+  $("#mRoom").textContent=`${roomShort(room)} · ${room}`;
+  $("#mSubject").value="Ad-hoc Buchung";
+  $("#mStart").value=hhmm(start);
+  $("#mEnd").value=hhmm(end);
+  $("#mErr").textContent="";
+  $("#overlay").classList.add("on");
+  $("#mSubject").focus();
+}
+  
 function closeModal(){ $("#overlay").classList.remove("on"); pendingBooking=null; }
 
 function timeToDate(v){
@@ -609,6 +622,11 @@ function timeToDate(v){
 }
 
 async function confirmBooking(){
+  const snap = d => { const s=(CONFIG.slotMinutes||15); d.setMinutes(Math.round(d.getMinutes()/s)*s, 0, 0); return d; };
+  snap(start); snap(end);
+  $("#mStart").value = hhmm(start);   // gerundete Werte zurückschreiben
+  $("#mEnd").value   = hhmm(end);
+  
   if(!pendingBooking) return;
   const subject=$("#mSubject").value.trim()||"Ad-hoc Buchung";
   const start=timeToDate($("#mStart").value);
@@ -617,6 +635,15 @@ async function confirmBooking(){
   if(!(end>start)){ err.textContent="Ende muss nach dem Start liegen."; return; }
   if(start < new Date(Date.now()-60000)){ err.textContent="Start liegt in der Vergangenheit."; return; }
 
+  // Raster prüfen (nur volle 15-Minuten-Schritte)
+  const step = CONFIG.slotMinutes || 15;
+  if(start.getMinutes() % step !== 0 || end.getMinutes() % step !== 0){
+    err.textContent = `Bitte nur in ${step}-Minuten-Schritten (z. B. :00, :15, :30, :45).`; return;
+  }
+  // Überlappung mit bestehenden Buchungen?
+  const clash = (pendingBooking.events||[]).some(ev => start < ev.end && end > ev.start);
+  if(clash){ err.textContent = "In diesem Zeitraum ist der Raum bereits belegt."; return; }
+  
   $("#mConfirm").disabled=true; err.textContent="";
   try{
     await createBooking(pendingBooking.room, subject, start, end);
