@@ -289,7 +289,7 @@ floorplans: {
     youAreHere: {x: 49, y:40},
   },
 },
-"RES_XXXXX@covestro.com": { name:"Raum 502", building:"K12", floor:"5.OG", capacity:12, equipment:["monitor","camera","speaker"], planX:13.8, planY:15.7 },
+"RES_13900@covestro.com": { name:"Raum 502", building:"K12", floor:"5.OG", capacity:12, equipment:["monitor","camera","speaker"], planX:13.8, planY:15.7 },
   
   dayStartHour: 7,        // Anfang der Zeitleiste
   dayEndHour: 20,         // Ende der Zeitleiste
@@ -847,7 +847,7 @@ function scheduleNightlyReload(){
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll(); });
   scheduleNightlyReload();
 })();
-  /* ============ ZWEITE SICHT: ETAGENPLAN (mit Umschalter) ============ */
+/* ============ ZWEITE SICHT: ETAGENPLAN (mit Umschalter) ============ */
 (function(){
   if(!CONFIG.floorplans){ console.warn("CONFIG.floorplans fehlt"); return; }
   const css = `
