@@ -240,57 +240,21 @@ const CONFIG = {
     "RES_14175@covestro.com",
     "RES_14174@covestro.com",
   ],
-  roomInfo: {
-    "RES_14128@covestro.com" : {
-      name: "Raum 501",
-      capacity: 8,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-      "RES_13900@covestro.com" : {
-      name: "Raum 502",
-      capacity: 12,
-      equipment: ["beamer", "camera", "speaker"],
-      },
-      "RES_14170@covestro.com" : {
-      name: "Raum 509",
-      capacity: 16,
-      equipment: ["beamer"],
-      },
-      "RES_13844@covestro.com" : {
-      name: "Raum 510",
-      capacity: 18,
-      equipment: ["beamer", "camera", "speaker"],
-      },
-      "RES_14171@covestro.com" : {
-      name: "Raum 521",
-      capacity: 10,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-      "RES_14172@covestro.com" : {
-      name: "Raum 522",
-      capacity: 5,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-      "RES_14173@covestro.com" : {
-      name: "Raum 530",
-      capacity: 5,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-      "RES_14175@covestro.com" : {
-      name: "Raum 572",
-      capacity: 16,
-      equipment: ["monitor", "camera", "speaker"],
-      },
-},
-
-floorplans: {
-  "K12|5.OG": {
-    image: "https://kamos-cov.github.io/hv/plans/etagenplan-k12-5og.svg",
-    youAreHere: {x: 49, y:40},
+  roomInfo: 
+  {
+    "RES_14128@covestro.com" : {name: "Raum 501", capacity: 8, equipment: ["monitor", "camera", "speaker"], },
+    "RES_13900@covestro.com" : {name: "Raum 502", capacity: 12, equipment: ["beamer", "camera", "speaker"],},
+    "RES_14170@covestro.com" : {name: "Raum 509", capacity: 16, equipment: ["beamer"], },
+    "RES_13844@covestro.com" : { name: "Raum 510", capacity: 18, equipment: ["beamer", "camera", "speaker"],},
+    "RES_14171@covestro.com" : {name: "Raum 521", capacity: 10, equipment: ["monitor", "camera", "speaker"], },
+    "RES_14172@covestro.com" : {name: "Raum 522", capacity: 5, equipment: ["monitor", "camera", "speaker"], },
+    "RES_14173@covestro.com" : {name: "Raum 530", capacity: 5, equipment: ["monitor", "camera", "speaker"], },
+    "RES_14175@covestro.com" : {name: "Raum 572", capacity: 16, equipment: ["monitor", "camera", "speaker"], },
   },
-},
-"RES_13900@covestro.com": { name:"Raum 502", building:"K12", floor:"5.OG", capacity:12, equipment:["monitor","camera","speaker"], planX:13.8, planY:15.7 },
-  
+  floorplans: {
+    "K12|5.OG": {image: "https://kamos-cov.github.io/hv/plans/etagenplan-k12-5og.svg", youAreHere: {x: 49, y:40},  }, 
+    "RES_13900@covestro.com": { name:"Raum 502", building:"K12", floor:"5.OG", capacity:12, equipment:["monitor","camera","speaker"], planX:13.8, planY:15.7 },
+  },
   dayStartHour: 7,        // Anfang der Zeitleiste
   dayEndHour: 20,         // Ende der Zeitleiste
   slotMinutes: 15,        // Raster + Standard-Buchungsdauer-Schritt
