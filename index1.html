@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raumbelegung Meetingräume K12 5.OG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.google.apis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono;wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
+<style>
+  :root{
+    --bg:#E9ECEF; --surface:#FFFFFF; --ink:#181B1F; --muted:#646E78;
+    --hair:#DCE1E6; --hair-strong:#C7CED5;
+    --free:#1F9E8B; --free-soft:#E4F3F0; --free-line:#BFE3DC;
+    --booked:#BD5A4E; --booked-soft:#F6E6E3;
+    --now:#E0A23C;
+    --shadow:0 1px 2px rgba(20,30,40,.06),0 8px 24px rgba(20,30,40,.06);
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Arimo",system-ui,sans-serif; font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+  /* ---- Topbar ---- */
+
+  header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:12px 22px; background:#000;
+    border-bottom:1px solid #2a2e33;
+  }
+  header .logo{height:40px; width:40px; border-radius:8px; display:block; flex:none}
+  header .brand b{color:#fff}
+  header .brand .date{color:#9aa2ab}
+  header .legend{color:#c2c8ce}
+  header .who{color:#9aa2ab}
+  header .btn{background:#1c1f23; border-color:#3a3f45; color:#e8ebee}
+  header .btn:hover{border-color:#5a616a}
+  header .btn.primary{background:var(--free); border-color:var(--free); color:#fff}
+  header .kstatus{background:#1c1f23; border-color:#3a3f45; color:#c2c8ce}
+  header #who, header #authBtn{ display:none;}
+
+  .brand{display:flex; flex-direction:column; gap:1px}
+  .brand b{font-family:"Arimo"; font-weight:700; font-size:18px; letter-spacing:-.01em}
+  .brand .date{color:var(--muted); font-size:12.5px}
+  .spacer{flex:1}
+  .legend{display:flex; gap:16px; align-items:center; color:var(--muted); font-size:12.5px}
+  .legend .dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+  .dot.free{background:var(--free)} .dot.booked{background:var(--booked)} .dot.now{background:var(--now)}
+  button{font-family:inherit; cursor:pointer; border:0}
+  .btn{
+    background:var(--surface); border:1px solid var(--hair-strong); color:var(--ink);
+    padding:8px 13px; border-radius:8px; font-size:13.5px; font-weight:500;
+    display:inline-flex; align-items:center; gap:7px; transition:.15s;
+  }
+  .btn:hover{border-color:var(--muted)}
+  .btn.primary{background:var(--free); border-color:var(--free); color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .who{color:var(--muted); font-size:12.5px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+  /* ---- Board ---- */
+  main{padding:18px 22px 60px; max-width:1500px; margin:0 auto}
+  .axis{
+    display:grid; grid-template-columns:var(--labelw) 1fr; align-items:end;
+    margin-bottom:6px; position:sticky; top:64px; z-index:20;
+    --labelw:230px;
+  }
+  .axis .pad{}
+  .axis .ticks{position:relative; height:20px; border-bottom:1px solid var(--hair-strong)}
+  .tick{position:absolute; transform:translateX(-50%); bottom:3px; font-size:11px; color:var(--muted)}
+  .tick.mono{font-size:11px}
+
+  .lane{
+    display:grid; grid-template-columns:230px 1fr; align-items:stretch;
+    gap:0; background:var(--surface); border:1px solid var(--hair);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    margin-bottom:10px; overflow:hidden;
+  }
+  .lane .label{padding:14px 16px; border-right:1px solid var(--hair); display:flex; flex-direction:column; gap:6px; justify-content:center}
+  .lane .label .rn{font-family:"Arimo"; font-weight:600; font-size:15px}
+  .lane .label .rsub{font-size:11.5px; color:var(--muted)}
+  /* .lane .label .meta{display:flex; flex-direction:column; gap:5px; margin:1px 0} */
+  .lane .label .meta{display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:6px 14px; margin:1px 0}
+  .lane .label .rhead{display:flex; align-items:center; justify-content:space-between; gap:10px}
+  .lane .label .rhead .rn{margin:0}
+  .lane .label .rhead .pill{align-self:auto}
+
+  .meta .cap{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); font-weight:500}
+  .meta .cap svg{width:15px; height:15px; flex:none}
+  .meta .equip{display:flex; align-items:center; gap:9px; color:var(--muted)}
+  .meta .equip svg{width:17px; height:17px}
+  .meta .ei{display:inline-flex}
+  .meta .ei-txt{font-size:11px; padding:1px 6px; background:#EEF1F4; border-radius:5px}
+  .pill{align-self:flex-start; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px}
+  .pill.free{background:var(--free-soft); color:#0c6f60}
+  .pill.booked{background:var(--booked-soft); color:#8f3a30}
+  .pill.err{background:#F1E7D6; color:#8a6a2a}
+
+  .track{
+    position:relative; height:62px; cursor:crosshair;
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent calc(var(--step) - 1px), var(--hair) calc(var(--step) - 1px), var(--hair) var(--step));
+  }
+  .track .free-hint{position:absolute; inset:0; background:var(--free-soft); opacity:0}
+  .track:hover .free-hint{opacity:.5}
+  .block{
+    position:absolute; top:7px; bottom:7px; border-radius:7px; overflow:hidden;
+    background:var(--booked); color:#fff; padding:6px 9px;
+    display:flex; flex-direction:column; justify-content:center; gap:1px;
+    box-shadow:0 1px 0 rgba(0,0,0,.06) inset; min-width:2px;
+  }
+  .block .bt{font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .block .bh{font-size:10.5px; opacity:.85}
+  .nowline{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--now); z-index:5; pointer-events:none}
+  .nowline::before{content:""; position:absolute; top:-3px; left:-3px; width:8px; height:8px; border-radius:50%; background:var(--now)}
+  .ghost{position:absolute; top:7px; bottom:7px; border:2px dashed var(--free); background:var(--free-soft); border-radius:7px; pointer-events:none; opacity:0}
+
+  .past-veil{position:absolute; top:0; bottom:0; left:0; background:rgba(120,130,140,.10); pointer-events:none}
+
+  /* ---- States ---- */
+  .notice{
+    background:var(--surface); border:1px solid var(--hair-strong); border-radius:var(--radius);
+    padding:22px 24px; box-shadow:var(--shadow); max-width:720px; margin:30px auto;
+  }
+  .notice h2{font-family:"Arimo"; margin:0 0 8px; font-size:18px}
+  .notice p{margin:6px 0; color:#3b434b}
+  .notice code{background:#EEF1F4; padding:1px 6px; border-radius:5px; font-family:"Arimo"; font-size:13px}
+  .skeleton{height:62px; background:linear-gradient(90deg,#eef1f4,#f6f8fa,#eef1f4); background-size:200% 100%; animation:sh 1.3s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* ---- Modal ---- */
+  .overlay{position:fixed; inset:0; background:rgba(18,24,30,.42); display:none; align-items:center; justify-content:center; z-index:60; padding:20px}
+  .overlay.on{display:flex}
+  .modal{background:var(--surface); border-radius:14px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:hidden}
+  .modal .mh{padding:18px 22px; border-bottom:1px solid var(--hair)}
+  .modal .mh h3{margin:0; font-family:"Arimo"; font-size:17px}
+  .modal .mh span{color:var(--muted); font-size:13px}
+  .modal .mb{padding:18px 22px; display:flex; flex-direction:column; gap:14px}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:5px}
+  .field input{width:100%; padding:10px 12px; border:1px solid var(--hair-strong); border-radius:8px; font-family:inherit; font-size:14px}
+  .field input:focus{outline:2px solid var(--free); outline-offset:-1px; border-color:var(--free)}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .mf{padding:16px 22px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--hair)}
+  .err-msg{color:#a3382c; font-size:12.5px; min-height:1px}
+
+  /* ---- Toast ---- */
+  #toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:#181B1F; color:#fff; padding:11px 18px; border-radius:10px; font-size:13.5px; z-index:80; transition:.25s; pointer-events:none; max-width:90vw}
+  #toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:#8f3a30}
+
+  @media(max-width:720px){
+    .lane{grid-template-columns:1fr}
+    .lane .label{border-right:0; border-bottom:1px solid var(--hair); flex-direction:row; align-items:center; flex-wrap:wrap}
+    .axis{grid-template-columns:1fr; --labelw:0}
+    .axis .pad{display:none}
+    .legend{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://kamos-cov.github.io/hv/logo1.png" class="logo" alt="Covestro" />
+  <div class="brand">
+    <b>Meetingräume K12/5.OG</b>
+    <span class="date mono" id="todayLabel">–</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="legend">
+    <span><span class="dot free"></span>Frei</span>
+    <span><span class="dot booked"></span>Belegt</span>
+    <span><span class="dot now"></span>Jetzt</span>
+  </div>
+  <span class="who" id="who"></span>
+  <button class="btn" id="refreshBtn" title="Aktualisieren">⟳ Aktualisieren</button>
+  <button class="btn" id="authBtn">Anmelden</button>
+</header>
+
+<main id="board">
+  <!-- gefüllt per JS -->
+</main>
+
+<!-- Buchungs-Dialog -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="mh">
+      <h3>Raum buchen</h3>
+      <span id="mRoom">–</span>
+    </div>
+    <div class="mb">
+      <div class="field">
+        <label for="mSubject">Titel</label>
+        <input id="mSubject" type="text" value="Ad-hoc Buchung" />
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="mStart">Von</label>
+          <input id="mStart" type="time" step="900" />
+        </div>
+        <div class="field">
+          <label for="mEnd">Bis</label>
+          <input id="mEnd" type="time" step="900" />
+        </div>
+      </div>
+      <div class="err-msg" id="mErr"></div>
+    </div>
+    <div class="mf">
+      <button class="btn" id="mCancel">Abbrechen</button>
+      <button class="btn primary" id="mConfirm">Jetzt buchen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   1) KONFIGURATION  –  hier deine Werte eintragen
+   ============================================================ */
+const CONFIG = {
+  tenantId: "0468bc4a-134c-4fb0-b843-a2a3d583e919",          // Verzeichnis-(Tenant-)ID
+  clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1", // Anwendungs-(Client-)ID der App-Registrierung
+
+  // Deine 10 Räume. Bei Bedarf erweitern (RES_13900 ... RES_13999).
+  rooms: [
+    "RES_14128@covestro.com",
+    "RES_13900@covestro.com",
+    "RES_14170@covestro.com",
+    "RES_13844@covestro.com",
+    "RES_14171@covestro.com",
+    "RES_14172@covestro.com",
+    "RES_14173@covestro.com",
+    "RES_14174@covestro.com",
+    "RES_14175@covestro.com",
+  ],
+  roomInfo:
+  {
+    "RES_14128@covestro.com" : { name: "Raum 501", building:"K12", floor:"5.OG", capacity: 8,  equipment: ["monitor", "camera", "speaker"], planX:16, planY:90 },
+    "RES_13900@covestro.com" : { name: "Raum 502", building:"K12", floor:"5.OG", capacity: 12, equipment: ["beamer", "camera", "speaker"], planX:16, planY:14 },
+    "RES_14170@covestro.com" : { name: "Raum 509", building:"K12", floor:"5.OG", capacity: 16, equipment: ["beamer"], planX:27, planY:90 },
+    "RES_13844@covestro.com" : { name: "Raum 510", building:"K12", floor:"5.OG", capacity: 18, equipment: ["beamer", "camera", "speaker"], planX:27, planY:14 },
+    "RES_14171@covestro.com" : { name: "Raum 521", building:"K12", floor:"5.OG", capacity: 10, equipment: ["monitor", "camera", "speaker"], planX:39, planY:90},
+    "RES_14172@covestro.com" : { name: "Raum 522", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:39, planY:14 },
+    "RES_14173@covestro.com" : { name: "Raum 530", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:47, planY:14 },
+    "RES_14174@covestro.com" : { name: "Raum 550", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:57, planY:14 },
+    "RES_14175@covestro.com" : { name: "Raum 572", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:80.8, planY:14 },
+  },
+  floorplans: { "K12|5.OG": {image: "https://kamos-cov.github.io/hv/plans/etagen-k12-5.svg", youAreHere: {x: 47, y:70}, }, },
+
+  dayStartHour: 7,        // Anfang der Zeitleiste
+  dayEndHour: 20,         // Ende der Zeitleiste
+  slotMinutes: 15,        // Raster + Standard-Buchungsdauer-Schritt
+  defaultDurationMin: 30, // Vorbelegte Dauer beim Klick
+  timeZone: "W. Europe Standard Time", // Outlook-Zeitzonenname
+  autoRefreshSec: 60,
+};
+/* ============================================================ */
+const GRAPH ="https://graph.microsoft.com/v1.0";
+/* const GRAPH = "https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fgraph.microsoft.com%2Fv1.0&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294771566%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=1f6ThRJ0rJW7gMWceKKA%2FVhjtbBI01dvfphHRUBPCdU%3D&reserved=0"; */
+const SCOPES = ["User.Read", "Calendars.ReadWrite.Shared"];
+
+let msalInstance = null;
+let account = null;
+let refreshTimer = null;
+let pendingBooking = null; // {room, dateStr}
+
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const pad = n => String(n).padStart(2,"0");
+const isConfigured = () => CONFIG.tenantId && !CONFIG.tenantId.startsWith("DEINE_")
+                        && CONFIG.clientId && !CONFIG.clientId.startsWith("DEINE_");
+
+/* ---------- Zeit-Helfer (lokale Browserzeit) ---------- */
+function dayBounds(){
+  const s = new Date(); s.setHours(CONFIG.dayStartHour,0,0,0);
+  const e = new Date(); e.setHours(CONFIG.dayEndHour,0,0,0);
+  return {s,e, total:(e-s)/60000};
+}
+function localNaive(d){ // "YYYY-MM-DDTHH:mm:ss" ohne Zeitzone
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function hhmm(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function pctOf(d){
+  const {s,total}=dayBounds();
+  return Math.max(0,Math.min(100, ((d - s)/60000/total)*100));
+}
+function roundToSlot(d){
+  const ms = CONFIG.slotMinutes*60000;
+  return new Date(Math.floor(d.getTime()/ms)*ms);
+}
+
+/* ---------- Toast ---------- */
+function toast(msg, bad=false){
+  const t=$("#toast"); t.textContent=msg; t.className = bad?"on bad":"on";
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className="",3200);
+}
+
+/* ============================================================
+   2) AUTH
+   ============================================================ */
+async function initAuth(){
+  msalInstance = new msal.PublicClientApplication({
+    auth:{
+      clientId: "129f698e-e384-4aee-8fef-585b88c5fcd1", /* CONFIG.clientId, */
+      authority: "https://login.microsoftonline.com/0468bc4a-134c-4fb0-b843-a2a3d583e919", /*`https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Flogin.microsoftonline.com%2F%24&data=05%7C02%7Cstefan.mohr%40covestro.com%7C6aa61bb9c8f246fcd76908ded6b9b7bb%7C0468bc4a134c4fb0b843a2a3d583e919%7C0%7C0%7C639184290294789736%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=Lt5XbmGuJtT4fbAB39qmP4PCIsFSyXnXNvdYcdU8G7Q%3D&reserved=0{CONFIG.tenantId}`,*/
+      redirectUri: window.location.origin + window.location.pathname,
+    },
+    cache:{ cacheLocation:"localStorage", storeAuthStateInCookie:false },
+  });
+  await msalInstance.initialize();
+  const resp = await msalInstance.handleRedirectPromise();
+  account = resp?.account || msalInstance.getAllAccounts()[0] || null;
+  updateAuthUI();
+}
+function updateAuthUI(){
+  const btn=$("#authBtn"); const who=$("#who");
+  if(account){ btn.textContent="Abmelden"; who.textContent=account.username||account.name||""; }
+  else { btn.textContent="Anmelden"; who.textContent=""; }
+}
+async function signIn(){ await msalInstance.loginRedirect({ scopes:SCOPES }); }
+async function signOut(){ await msalInstance.logoutRedirect({ account }); }
+async function getToken(){
+  if(!account) account = msalInstance.getAllAccounts()[0];
+  if(!account){ await signIn(); return null; }
+  try{
+    const r = await msalInstance.acquireTokenSilent({ scopes:SCOPES, account });
+    return r.accessToken;
+  }catch(e){
+    await msalInstance.acquireTokenRedirect({ scopes:SCOPES, account });
+    return null;
+  }
+}
+
+/* ============================================================
+   3) GRAPH
+   ============================================================ */
+async function fetchRoom(room, token){
+  const {s,e}=dayBounds();
+  const url = `${GRAPH}/users/${encodeURIComponent(room)}/calendarView`
+    + `?startDateTime=${encodeURIComponent(localNaive(s))}`
+    + `&endDateTime=${encodeURIComponent(localNaive(e))}`
+    + `&$select=subject,start,end,showAs,isAllDay`
+    + `&$orderby=start/dateTime&$top=100`;
+  const res = await fetch(url,{
+    headers:{
+      Authorization:`Bearer ${token}`,
+      Prefer:`outlook.timezone="${CONFIG.timeZone}"`,
+    }
+  });
+  if(!res.ok){
+    const code = res.status;
+    throw new Error(code===403?"Kein Zugriff":code===404?"Nicht gefunden":`Fehler ${code}`);
+  }
+  const data = await res.json();
+  return (data.value||[]).map(ev=>({
+    subject: ev.subject || "Belegt",
+    start: new Date(ev.start.dateTime),
+    end: new Date(ev.end.dateTime),
+    allDay: ev.isAllDay,
+  })).filter(ev=>ev.end>ev.start);
+}
+
+async function createBooking(room, subject, start, end){
+  const token = await getToken(); if(!token) return false;
+  const body = {
+    subject: String(subject),
+    start: { dateTime: localNaive(start), timeZone: CONFIG.timeZone },
+    end:   { dateTime: localNaive(end),   timeZone: CONFIG.timeZone },
+    location: { displayName: roomShort(room) },
+    attendees: [
+      { emailAddress: { address: room, name: roomShort(room) }, type: "resource" }
+    ]
+  };
+  console.log("Buchungs-Body:", JSON.stringify(body));   // zum Prüfen
+  const res = await fetch(`${GRAPH}/me/events`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    const raw = await res.text();
+    console.error("Graph-Fehler:", res.status, raw);      // vollständige Meldung
+    let msg = `Fehler ${res.status}`;
+    try { const j = JSON.parse(raw); if(j.error?.message) msg = j.error.message; } catch(_){}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+/* ============================================================
+   4) RENDER
+   ============================================================ */
+function buildSkeleton(){
+  const board=$("#board"); board.innerHTML="";
+  board.appendChild(buildAxis());
+  CONFIG.rooms.forEach(room=>{
+    const lane=document.createElement("div"); lane.className="lane";
+    lane.innerHTML=`
+      <div class="label">
+        <div class="rhead">
+          <div class="rn">${roomShort(room)}</div>
+          <span class="pill" data-pill>…</span>
+        </div>
+        ${roomMeta(room)}
+      </div>
+      <div class="track skeleton" data-track="${room}"></div>`;
+    board.appendChild(lane);
+  });
+}
+
+function roomShort(room){
+  return CONFIG.roomInfo?.[room]?.name
+      || CONFIG.roomNames?.[room]
+      || (room.split("@")[0] || room).replace(/_/g," ");
+}
+
+const CAP_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg>`;
+
+const ICONS = {
+  camera:     {label:"Kamera",       svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 10.5 21 7v10l-6-3.5"/></svg>`},
+  beamer:     {label:"Beamer", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="15" height="8" rx="2"/><circle cx="9" cy="12" r="2.2"/><path d="M13.5 12h1M17.5 10.5l3-1.5v6l-3-1.5M6 16v1.5M13 16v1.5"/></svg>`},
+  monitor:    {label:"Monitor",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></svg>`},
+  speaker:    {label:"Lautsprecher", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>`},
+  tv:         {label:"Display",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="12" rx="1.5"/><path d="M8 21h8"/></svg>`},
+  phone:      {label:"Konferenztelefon", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>`},
+  whiteboard: {label:"Whiteboard",   svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20l1.5-4M15 20l-1.5-4"/></svg>`},
+  wifi:       {label:"WLAN",         svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a11 11 0 0 1 14 0M8 12.5a6.5 6.5 0 0 1 8 0"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>`},
+};
+
+function equipmentIcons(list){
+  if(!list || !list.length) return "";
+  return `<div class="equip">` + list.map(k=>{
+    const ic = ICONS[k];
+    return ic ? `<span class="ei" title="${ic.label}" aria-label="${ic.label}">${ic.svg}</span>`
+              : `<span class="ei-txt">${escapeHtml(k)}</span>`;
+  }).join("") + `</div>`;
+}
+
+function roomMeta(room){
+  const info = CONFIG.roomInfo?.[room];
+  if(!info) return `<div class="rsub mono">${room}</div>`; // Fallback: alte E-Mail-Zeile
+  let html = `<div class="meta">`;
+  if(info.capacity) html += `<div class="cap">${CAP_ICON}<span>${info.capacity} Pers.</span></div>`;
+  html += equipmentIcons(info.equipment);
+  return html + `</div>`;
+}
+
+function buildAxis(){
+  const {s}=dayBounds();
+  const wrap=document.createElement("div"); wrap.className="axis";
+  let ticks="";
+  for(let h=CONFIG.dayStartHour; h<=CONFIG.dayEndHour; h++){
+    const d=new Date(s); d.setHours(h,0,0,0);
+    ticks+=`<span class="tick mono" style="left:${pctOf(d)}%">${pad(h)}:00</span>`;
+  }
+  wrap.innerHTML=`<div class="pad"></div><div class="ticks">${ticks}</div>`;
+  return wrap;
+}
+
+function renderRoom(room, events){
+  const track = $(`[data-track="${CSS.escape(room)}"]`);
+  if(!track) return;
+  track.className="track";
+  track.innerHTML="";
+
+  // Stepraster-Breite setzen
+  const {s,e,total}=dayBounds();
+  const stepPct = (CONFIG.slotMinutes/total)*100;
+  track.style.setProperty("--step", stepPct+"%");
+
+  // klickbarer Frei-Layer
+  const hint=document.createElement("div"); hint.className="free-hint"; track.appendChild(hint);
+
+  // Vergangenheit abdunkeln
+  const now=new Date();
+  if(now>s){
+    const veil=document.createElement("div"); veil.className="past-veil";
+    veil.style.width=Math.min(100,pctOf(now))+"%"; track.appendChild(veil);
+  }
+
+  // Buchungsblöcke
+  events.forEach(ev=>{
+    const left=pctOf(ev.start), right=pctOf(ev.end);
+    if(right<=left) return;
+    const b=document.createElement("div"); b.className="block";
+    b.style.left=left+"%"; b.style.width=(right-left)+"%";
+   // b.innerHTML=`<div class="bt">${escapeHtml(ev.subject)}</div>
+     b.innerHTML=`<div class="bt">Belegt</div>
+                 <div class="bh mono">${hhmm(ev.start)}–${hhmm(ev.end)}</div>`;
+    b.addEventListener("click",e=>{ e.stopPropagation(); }); // belegt = nicht buchbar
+    track.appendChild(b);
+  });
+
+  // Now-Linie
+  if(now>=s && now<=e){
+    const nl=document.createElement("div"); nl.className="nowline"; nl.style.left=pctOf(now)+"%";
+    track.appendChild(nl);
+  }
+
+  // Klick = buchen
+  track.onclick = (e)=> handleTrackClick(e, track, room, events);
+
+  // Status-Pill
+  updatePill(room, events);
+}
+
+function updatePill(room, events){
+  const lane = $(`[data-track="${CSS.escape(room)}"]`)?.closest(".lane");
+  const pill = lane?.querySelector("[data-pill]"); if(!pill) return;
+  const now=new Date();
+  const current = events.find(ev=> now>=ev.start && now<ev.end);
+  if(current){
+    pill.className="pill booked"; pill.textContent=`Belegt bis ${hhmm(current.end)}`;
+  }else{
+    const next = events.filter(ev=>ev.start>now).sort((a,b)=>a.start-b.start)[0];
+    pill.className="pill free";
+    pill.textContent = next ? `Frei bis ${hhmm(next.start)}` : "Frei";
+  }
+}
+
+function renderError(room, msg){
+  const track=$(`[data-track="${CSS.escape(room)}"]`); if(!track) return;
+  track.className="track"; track.innerHTML="";
+  track.onclick=null;
+  const lane=track.closest(".lane"); const pill=lane?.querySelector("[data-pill]");
+  if(pill){ pill.className="pill err"; pill.textContent=msg; }
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ---------- Klick auf Zeitleiste ---------- */
+function handleTrackClick(e, track, room, events){
+  if(e.target.closest(".block")) return;
+  const rect=track.getBoundingClientRect();
+  const ratio=(e.clientX-rect.left)/rect.width;
+  const {s,total}=dayBounds();
+  let clicked=new Date(s.getTime() + ratio*total*60000);
+  clicked=roundToSlot(clicked);
+
+  const now=new Date();
+  if(clicked < now) clicked = roundToSlot(new Date(now.getTime()+CONFIG.slotMinutes*60000));
+
+  // Überlappung?
+  if(events.some(ev=> clicked>=ev.start && clicked<ev.end)){
+    toast("Dieser Zeitpunkt ist bereits belegt.", true); return;
+  }
+  // Standard-Ende, gedeckelt auf nächste Buchung / Tagesende
+  let end=new Date(clicked.getTime()+CONFIG.defaultDurationMin*60000);
+  const next=events.filter(ev=>ev.start>clicked).sort((a,b)=>a.start-b.start)[0];
+  const {e:dayEnd}=dayBounds();
+  if(next && end>next.start) end=next.start;
+  if(end>dayEnd) end=dayEnd;
+  if(end<=clicked){ toast("Kein freier Slot ab hier.", true); return; }
+
+  openModal(room, clicked, end);
+}
+
+/* ---------- Modal ---------- */
+function openModal(room, start, end){
+  pendingBooking = { room, events: (typeof kLastEvents!="undefined" && kLastEvents[room]) || [] };
+  $("#mRoom").textContent=`${roomShort(room)} · ${room}`;
+  $("#mSubject").value="Ad-hoc Buchung";
+  $("#mStart").value=hhmm(start);
+  $("#mEnd").value=hhmm(end);
+  $("#mErr").textContent="";
+  $("#overlay").classList.add("on");
+  $("#mSubject").focus();
+}
+
+function closeModal(){ $("#overlay").classList.remove("on"); pendingBooking=null; }
+
+function timeToDate(v){
+  const [h,m]=v.split(":").map(Number);
+  const d=new Date(); d.setHours(h,m,0,0); return d;
+}
+
+async function confirmBooking(){
+  if(!pendingBooking) return;
+  const subject = $("#mSubject").value.trim() || "Ad-hoc Buchung";
+  let start = timeToDate($("#mStart").value);
+  let end   = timeToDate($("#mEnd").value);
+  const err = $("#mErr");
+
+  // auf 15-Minuten-Raster runden
+  const step = CONFIG.slotMinutes || 15;
+  const snap = d => { d.setMinutes(Math.round(d.getMinutes()/step)*step, 0, 0); return d; };
+  snap(start); snap(end);
+  $("#mStart").value = hhmm(start);
+  $("#mEnd").value   = hhmm(end);
+
+  // Grundprüfungen
+  if(!(end > start)){ err.textContent = "Ende muss nach dem Start liegen."; return; }
+  if(start < new Date(Date.now()-60000)){ err.textContent = "Start liegt in der Vergangenheit."; return; }
+
+  // Überlappung mit bestehenden Buchungen?
+  const clash = (pendingBooking.events||[]).some(ev => start < ev.end && end > ev.start);
+  if(clash){ err.textContent = "In diesem Zeitraum ist der Raum bereits belegt."; return; }
+
+  $("#mConfirm").disabled = true; err.textContent = "";
+  try{
+    await createBooking(pendingBooking.room, subject, start, end);
+    closeModal();
+    toast("Raum gebucht ✓");
+    await loadAll();
+  }catch(ex){
+    err.textContent = ex.message || "Buchung fehlgeschlagen.";
+  }finally{
+    $("#mConfirm").disabled = false;
+  }
+}
+
+/* ============================================================
+   5) LADEN
+   ============================================================ */
+async function loadAll(){
+  if(!isConfigured()){ showSetup(); return; }
+  if(!account){ buildSkeleton(); }
+  const token = await getToken();
+  if(!token) return; // Redirect läuft
+
+  buildSkeleton();
+  const results = await Promise.allSettled(CONFIG.rooms.map(r=>fetchRoom(r,token)));
+  results.forEach((res,i)=>{
+    const room=CONFIG.rooms[i];
+    if(res.status==="fulfilled") renderRoom(room,res.value);
+    else renderError(room, res.reason?.message||"Fehler");
+  });
+}
+
+function showSetup(){
+  $("#board").innerHTML=`
+    <div class="notice">
+      <h2>Einrichtung erforderlich</h2>
+      <p>Trage zuerst <code>tenantId</code> und <code>clientId</code> oben im <code>CONFIG</code>-Block in <code>index.html</code> ein.</p>
+      <p>Hinterlege in der Azure-App-Registrierung unter <b>Authentifizierung → Single-Page-Application</b> exakt diese Redirect-URI:</p>
+      <p><code id="ru"></code></p>
+      <p>Berechtigung (delegiert): <code>Calendars.ReadWrite.Shared</code>, <code>User.Read</code>, <code>openid</code>.</p>
+    </div>`;
+  $("#ru").textContent = window.location.origin + window.location.pathname;
+}
+
+/* ============================================================
+   6) INIT
+   ============================================================ */
+function setToday(){
+  const d=new Date();
+  const fmt=d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  $("#todayLabel").textContent=fmt;
+}
+function startAutoRefresh(){
+  clearInterval(refreshTimer);
+  refreshTimer=setInterval(()=>{ if(account) loadAll(); }, CONFIG.autoRefreshSec*1000);
+}
+
+window.addEventListener("DOMContentLoaded", async ()=>{
+  setToday();
+  $("#authBtn").onclick=()=> account? signOut() : signIn();
+  $("#refreshBtn").onclick=()=> loadAll();
+  $("#mCancel").onclick=closeModal;
+  $("#mConfirm").onclick=confirmBooking;
+  $("#overlay").onclick=e=>{ if(e.target.id==="overlay") closeModal(); };
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+
+  if(!isConfigured()){ showSetup(); return; }
+  try{
+    await initAuth();
+    await loadAll();
+    startAutoRefresh();
+  }catch(ex){
+    toast("Anmeldung fehlgeschlagen: "+(ex.message||ex), true);
+    console.error(ex);
+  }
+});
+/* ============================================================
+   KIOSK-SELBSTHEILUNG
+   Überschreibt getToken / loadAll / startAutoRefresh
+   ============================================================ */
+let kFailStreak = 0;
+let kBoardReady = false;
+let kNeedSignIn = false;
+const kLastEvents = {};
+
+/* --- Token: bei Ablauf NICHT automatisch weiterleiten, sondern Overlay zeigen --- */
+async function getToken(){
+  if(!account) account = msalInstance.getAllAccounts()[0] || null;
+  if(!account){ showAuthGate(); return null; }
+  try{
+    const r = await msalInstance.acquireTokenSilent({ scopes:SCOPES, account });
+    kNeedSignIn = false; hideAuthGate();
+    return r.accessToken;
+  }catch(e){
+    const code = String(e && (e.errorCode || e.name || ""));
+    const interactive = /interaction_required|login_required|consent_required|InteractionRequiredAuthError|no_account/i.test(code);
+    if(interactive){ kNeedSignIn = true; showAuthGate(); return null; }
+    throw e; // vermutlich Netz -> als Ladefehler behandeln
+  }
+}
+
+/* --- Laden mit "letzter guter Stand bleibt stehen" --- */
+async function loadAll(){
+  if(!isConfigured()){ showSetup(); return; }
+  let token;
+  try{ token = await getToken(); }
+  catch(e){ onLoadOutcome(false); return; }
+  if(!token) return; // Anmelde-Overlay ist aktiv – kein Fehlerzustand
+
+  if(!kBoardReady){ buildSkeleton(); kBoardReady = true; }
+
+  const results = await Promise.allSettled(CONFIG.rooms.map(r=>fetchRoom(r,token)));
+  let anyOk = false;
+  results.forEach((res,i)=>{
+    const room = CONFIG.rooms[i];
+    if(res.status === "fulfilled"){
+      kLastEvents[room] = res.value;
+      renderRoom(room, res.value);
+      anyOk = true;
+    } else {
+      if(kLastEvents[room]) renderRoom(room, kLastEvents[room]); // alten Stand halten
+      else renderError(room, res.reason?.message || "Fehler");
+    }
+  });
+  onLoadOutcome(anyOk);
+}
+
+function onLoadOutcome(ok){
+  if(ok){ kFailStreak = 0; setStatus("ok"); }
+  else{
+    kFailStreak++;
+    setStatus(navigator.onLine ? "stale" : "offline");
+    if(kFailStreak >= (CONFIG.reloadOnErrorsAfter || 10)) location.reload();
+  }
+}
+
+/* --- Selbstplanender Refresh-Loop (bricht bei Fehler nie ab) --- */
+function startAutoRefresh(){
+  clearTimeout(refreshTimer);
+  const tick = async ()=>{
+    try{ await loadAll(); }
+    catch(e){ onLoadOutcome(false); }
+    finally{ refreshTimer = setTimeout(tick, (CONFIG.autoRefreshSec || 60)*1000); }
+  };
+  refreshTimer = setTimeout(tick, (CONFIG.autoRefreshSec || 60)*1000);
+}
+
+/* --- Status-Chip + Anmelde-Overlay --- */
+function setStatus(state){
+  const chip = document.getElementById("kStatus"); if(!chip) return;
+  const dot = chip.querySelector(".kdot"); const txt = chip.querySelector(".ktxt");
+  if(state==="ok"){ dot.style.background="var(--free)"; txt.textContent="Aktualisiert "+hhmm(new Date()); }
+  else if(state==="stale"){ dot.style.background="var(--now)"; txt.textContent="Verbindung instabil…"; }
+  else { dot.style.background="var(--booked)"; txt.textContent="Keine Verbindung"; }
+}
+function showAuthGate(){ document.getElementById("kGate")?.classList.add("on"); }
+function hideAuthGate(){ document.getElementById("kGate")?.classList.remove("on"); }
+
+function scheduleNightlyReload(){
+  const h = (CONFIG.nightlyReloadHour ?? 3.5);
+  const now = new Date(); const next = new Date(now);
+  next.setHours(Math.floor(h), Math.round((h%1)*60), 0, 0);
+  if(next <= now) next.setDate(next.getDate()+1);
+  setTimeout(()=>location.reload(), next - now);
+}
+
+/* --- Einmalige Einrichtung: Styles, Chip, Overlay, Watchdogs --- */
+(function initKiosk(){
+  const css = `
+  .kstatus{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+    padding:6px 10px;border:1px solid var(--hair-strong);border-radius:8px;background:var(--surface)}
+  .kstatus .kdot{width:9px;height:9px;border-radius:50%;background:var(--free);flex:none;transition:.3s}
+  .kgate{position:fixed;inset:0;background:rgba(24,27,31,.92);display:none;align-items:center;
+    justify-content:center;z-index:100;padding:24px}
+  .kgate.on{display:flex}
+  .kgate-box{background:var(--surface);border-radius:18px;padding:40px 44px;text-align:center;
+    max-width:440px;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+  .kgate-title{font-family:"Arimo";font-weight:700;font-size:24px;margin-bottom:10px}
+  .kgate-sub{color:var(--muted);font-size:15px;margin-bottom:26px;line-height:1.5}
+  .kgate-btn{background:var(--free);color:#fff;border:0;border-radius:12px;padding:16px 34px;
+    font-family:inherit;font-size:18px;font-weight:600;cursor:pointer;min-width:200px;min-height:56px}
+  .kgate-btn:active{filter:brightness(.95)}`;
+  const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+
+  const header = document.querySelector("header");
+  if(header){
+    const chip = document.createElement("div");
+    chip.id="kStatus"; chip.className="kstatus";
+    chip.innerHTML = `<span class="kdot"></span><span class="ktxt">…</span>`;
+    header.insertBefore(chip, document.getElementById("refreshBtn"));
+  }
+
+  const gate = document.createElement("div");
+  gate.id="kGate"; gate.className="kgate";
+  gate.innerHTML = `
+    <div class="kgate-box">
+      <div class="kgate-title">Anmeldung erforderlich</div>
+      <div class="kgate-sub">Die Sitzung ist abgelaufen. Zum Fortfahren bitte tippen.</div>
+      <button class="kgate-btn" id="kGateBtn">Anmelden</button>
+    </div>`;
+  document.body.appendChild(gate);
+  document.getElementById("kGateBtn").onclick = ()=>{ try{ signIn(); }catch(e){ location.reload(); } };
+
+  window.addEventListener("online",  ()=>{ setStatus("stale"); loadAll(); });
+  window.addEventListener("offline", ()=>{ setStatus("offline"); });
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll(); });
+  scheduleNightlyReload();
+})();
+/* ============ ZWEITE SICHT: ETAGENPLAN (mit Umschalter) ============ */
+(function(){
+  if(!CONFIG.floorplans){ console.warn("CONFIG.floorplans fehlt"); return; }
+  const css = `
+  .pv-view{display:none;max-width:1500px;margin:0 auto;padding:18px 22px;grid-template-columns:1fr 300px;gap:18px}
+  .pv-view.on{display:grid} body.pv-active main{display:none}
+  .pv-planwrap{position:relative;background:#fff;border:1px solid var(--hair);border-radius:12px;box-shadow:0 8px 24px rgba(20,30,40,.06);overflow:hidden}
+  .pv-planwrap img{display:block;width:100%;height:auto}
+  .pv-layer{position:absolute;inset:0}
+  .pv-m{position:absolute;transform:translate(-50%,-50%);cursor:pointer}
+  .pv-m .r{width:32px;height:32px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;background:#9aa2ab;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:.2s}
+  .pv-m.free .r{background:var(--free)} .pv-m.booked .r{background:var(--booked)}
+  .pv-m.sel .r{transform:scale(1.35);box-shadow:0 0 0 5px rgba(31,158,139,.3),0 4px 12px rgba(0,0,0,.4)}
+  .pv-m .t{position:absolute;top:36px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#181B1F;color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;opacity:0;transition:.2s;pointer-events:none}
+  .pv-m.sel .t{opacity:1}
+  .pv-here{position:absolute;transform:translate(-50%,-100%);pointer-events:none;text-align:center}
+  .pv-here .p{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--now);transform:rotate(-45deg);margin:0 auto;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+  .pv-here .l{font-size:10px;font-weight:700;color:#8a6a2a;background:#fff;padding:1px 6px;border-radius:5px;margin-top:4px;display:inline-block}
+  .pv-card{background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;box-shadow:0 8px 24px rgba(20,30,40,.06)}
+  .pv-card h3{margin:0 0 6px;font-family:"Space Grotesk";font-size:20px}
+  .pv-stat{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px}
+  .pv-stat.free{background:var(--free-soft);color:#0c6f60}.pv-stat.booked{background:var(--booked-soft);color:#8f3a30}
+  .pv-meta{display:flex;flex-direction:column;gap:8px;margin-top:12px;color:#3b434b;font-size:13px}
+  .pv-eq{display:flex;gap:10px;align-items:center;color:var(--muted)} .pv-eq svg{width:18px;height:18px}
+  .pv-btn{margin-top:14px;width:100%;background:var(--free);color:#fff;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .pv-btn[disabled]{background:#c7ced5;cursor:not-allowed}
+  .pv-toggle{display:inline-flex;background:#1c1f23;border:1px solid #3a3f45;border-radius:9px;padding:3px;gap:2px}
+  .pv-toggle button{background:transparent;color:#c2c8ce;border:0;padding:6px 14px;border-radius:7px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+  .pv-toggle button.on{background:var(--free);color:#fff}
+  @media(max-width:820px){.pv-view.on{grid-template-columns:1fr}}`;
+  const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
+
+  const tg=document.createElement("div"); tg.className="pv-toggle";
+  tg.innerHTML=`<button data-v="list" class="on">Liste</button><button data-v="plan">Plan</button>`;
+  const header=document.querySelector("header");
+  header.insertBefore(tg, header.querySelector(".brand").nextSibling);
+
+  const view=document.createElement("div"); view.className="pv-view";
+  view.innerHTML=`<div class="pv-planwrap"><img id="pvImg" alt="Etagenplan"><div class="pv-layer" id="pvLayer"></div></div>
+    <div class="pv-side"><div class="pv-card" id="pvDetail"><h3>Raum wählen</h3>
+    <div style="color:var(--muted);font-size:13px">Tippe einen Raum im Plan an.</div></div></div>`;
+  document.querySelector("main").after(view);
+  const layer=view.querySelector("#pvLayer"), img=view.querySelector("#pvImg");
+  let planActive=false, builtKey=null;
+
+  function planKey(){
+    const p=new URLSearchParams(location.search), b=p.get("building"), f=p.get("floor");
+    if(b&&f && CONFIG.floorplans[b+"|"+f]) return b+"|"+f;
+    return Object.keys(CONFIG.floorplans)[0];
+  }
+  function roomsForKey(key){
+    return CONFIG.rooms.filter(r=>{ const i=CONFIG.roomInfo?.[r];
+      return i && (i.building+"|"+i.floor)===key && i.planX!=null && i.planY!=null; });
+  }
+  function statusOf(room){
+    const evs=(typeof kLastEvents!=="undefined" && kLastEvents[room]) || null;
+    if(!evs) return {known:false,free:true,until:null};
+    const now=new Date(), cur=evs.find(e=>now>=e.start&&now<e.end);
+    if(cur) return {known:true,free:false,until:hhmm(cur.end)};
+    const nx=evs.filter(e=>e.start>now).sort((a,b)=>a.start-b.start)[0];
+    return {known:true,free:true,until:nx?hhmm(nx.start):null};
+  }
+  function ringText(room){ const m=roomShort(room).match(/\d+/); return m?m[0]:"•"; }
+
+  function buildPlan(){
+    const key=planKey(), fp=CONFIG.floorplans[key];
+    img.src=fp.image; builtKey=key; layer.innerHTML="";
+    if(fp.youAreHere){ const h=document.createElement("div"); h.className="pv-here";
+      h.style.left=fp.youAreHere.x+"%"; h.style.top=fp.youAreHere.y+"%";
+      h.innerHTML=`<div class="p"></div><div class="l">Sie sind hier</div>`; layer.appendChild(h); }
+    roomsForKey(key).forEach(room=>{ const i=CONFIG.roomInfo[room];
+      const m=document.createElement("div"); m.className="pv-m"; m.dataset.room=room;
+      m.style.left=i.planX+"%"; m.style.top=i.planY+"%";
+      m.innerHTML=`<div class="r">${ringText(room)}</div><div class="t">${roomShort(room)}</div>`;
+      m.onclick=()=>selectRoom(room); layer.appendChild(m); });
+    colorMarkers();
+  }
+  function colorMarkers(){
+    layer.querySelectorAll(".pv-m").forEach(m=>{ const s=statusOf(m.dataset.room);
+      m.classList.toggle("free", s.known && s.free); m.classList.toggle("booked", s.known && !s.free); });
+  }
+  function selectRoom(room){
+    layer.querySelectorAll(".pv-m").forEach(m=>m.classList.toggle("sel",m.dataset.room===room));
+    const i=CONFIG.roomInfo[room]||{}, s=statusOf(room), d=view.querySelector("#pvDetail");
+    const eq=(i.equipment && typeof equipmentIcons==="function")?equipmentIcons(i.equipment):"";
+    const statusHtml=s.known?`<span class="pv-stat ${s.free?'free':'booked'}">${s.free?(s.until?'Frei bis '+s.until:'Frei'):'Belegt bis '+s.until}</span>`
+      :`<span class="pv-stat" style="background:#eef1f4;color:#646e78">Lädt…</span>`;
+    d.innerHTML=`<h3>${roomShort(room)}</h3>${statusHtml}
+      <div class="pv-meta">${i.capacity?`<div>👤 <b>${i.capacity}</b> Personen</div>`:""}${eq?`<div class="pv-eq">${eq}</div>`:""}</div>
+      <button class="pv-btn" id="pvBook" ${s.known&&!s.free?"disabled":""}>${s.known&&!s.free?"Aktuell belegt":"Diesen Raum buchen"}</button>`;
+    const b=d.querySelector("#pvBook");
+    if(b) b.onclick=()=>{ const now=new Date();
+      let start=roundToSlot(new Date(now.getTime()+(CONFIG.slotMinutes||15)*60000));
+      let end=new Date(start.getTime()+(CONFIG.defaultDurationMin||30)*60000);
+      openModal(room,start,end); };
+  }
+  function setView(v){
+    planActive=(v==="plan"); document.body.classList.toggle("pv-active",planActive);
+    view.classList.toggle("on",planActive);
+    tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.v===v));
+    if(planActive){ if(builtKey!==planKey()) buildPlan(); else colorMarkers(); }
+  }
+  tg.querySelectorAll("button").forEach(x=>x.onclick=()=>setView(x.dataset.v));
+
+  if(typeof loadAll==="function"){ const prev=loadAll;
+    loadAll=async function(){ const r=await prev.apply(this,arguments); try{ if(planActive) colorMarkers(); }catch(e){} return r; }; }
+})();
+</script>
+</body>
+</html>
