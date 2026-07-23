@@ -523,7 +523,7 @@ function updatePill(room, events){
   }else{
     const next = events.filter(ev=>ev.start>now).sort((a,b)=>a.start-b.start)[0];
     pill.className="pill free";
-    pill.textContent = next ? `Frei bis ${hhmm(next.start)}` : "Frei";
+    pill.textContent = next ? `Free until ${hhmm(next.start)}` : "Free";
   }
 }
 
@@ -559,7 +559,7 @@ function handleTrackClick(e, track, room, events){
   const {e:dayEnd}=dayBounds();
   if(next && end>next.start) end=next.start;
   if(end>dayEnd) end=dayEnd;
-  if(end<=clicked){ toast("Kein freier Slot ab hier.", true); return; }
+  if(end<=clicked){ toast("No free slots from here onwards.", true); return; }
 
   openModal(room, clicked, end);
 }
@@ -653,7 +653,7 @@ function showSetup(){
    ============================================================ */
 function setToday(){
   const d=new Date();
-  const fmt=d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  const fmt=d.toLocaleDateString("en-US",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
   $("#todayLabel").textContent=fmt;
 }
 function startAutoRefresh(){
