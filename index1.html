@@ -145,6 +145,8 @@
   .field label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:5px}
   .field input{width:100%; padding:10px 12px; border:1px solid var(--hair-strong); border-radius:8px; font-family:inherit; font-size:14px}
   .field input:focus{outline:2px solid var(--free); outline-offset:-1px; border-color:var(--free)}
+  .field input[readonly]{background:#EEF1F4; color:var(--muted); cursor:default}
+  .field input[readonly]:focus{outline:none; border-color:var(--hair-strong)}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
   .mf{padding:16px 22px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--hair)}
   .err-msg{color:#a3382c; font-size:12.5px; min-height:1px}
@@ -197,7 +199,7 @@
     <div class="mb">
       <div class="field">
         <label for="mSubject">Titel</label>
-        <input id="mSubject" type="text" value="Ad-hoc Buchung" />
+        <input id="mSubject" type="text" value="Ad-hoc Buchung" readonly tabindex="-1" />
       </div>
       <div class="row2">
         <div class="field">
@@ -571,7 +573,7 @@ function openModal(room, start, end){
   $("#mEnd").value=hhmm(end);
   $("#mErr").textContent="";
   $("#overlay").classList.add("on");
-  $("#mSubject").focus();
+  /* kein Autofokus: Titel ist read-only (sonst poppt am Kiosk die Bildschirmtastatur auf) */
 }
 
 function closeModal(){ $("#overlay").classList.remove("on"); pendingBooking=null; }
@@ -679,7 +681,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   }
 });
 /* ============================================================
-   KIOSK-SELBSTHEILUNG
+   KIOSK-SELBSTHEILUNG 
    Überschreibt getToken / loadAll / startAutoRefresh
    ============================================================ */
 let kFailStreak = 0;
@@ -810,50 +812,50 @@ function scheduleNightlyReload(){
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll(); });
   scheduleNightlyReload();
 })();
-/* ============ ZWEITE SICHT: ETAGENPLAN (mit Umschalter) ============ */
+/* ============ ETAGENPLAN – dauerhaft oben, Liste darunter ============ */
 (function(){
   if(!CONFIG.floorplans){ console.warn("CONFIG.floorplans fehlt"); return; }
   const css = `
-  .pv-view{display:none;max-width:1500px;margin:0 auto;padding:18px 22px;grid-template-columns:1fr 300px;gap:18px}
-  .pv-view.on{display:grid} body.pv-active main{display:none}
-  .pv-planwrap{position:relative;background:#fff;border:1px solid var(--hair);border-radius:12px;box-shadow:0 8px 24px rgba(20,30,40,.06);overflow:hidden}
-  .pv-planwrap img{display:block;width:100%;height:auto}
-  .pv-layer{position:absolute;inset:0}
-  .pv-m{position:absolute;transform:translate(-50%,-50%);cursor:pointer}
-  .pv-m .r{width:32px;height:32px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;background:#9aa2ab;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:.2s}
-  .pv-m.free .r{background:var(--free)} .pv-m.booked .r{background:var(--booked)}
-  .pv-m.sel .r{transform:scale(1.35);box-shadow:0 0 0 5px rgba(31,158,139,.3),0 4px 12px rgba(0,0,0,.4)}
-  .pv-m .t{position:absolute;top:36px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#181B1F;color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;opacity:0;transition:.2s;pointer-events:none}
-  .pv-m.sel .t{opacity:1}
-  .pv-here{position:absolute;transform:translate(-50%,-100%);pointer-events:none;text-align:center}
-  .pv-here .p{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--now);transform:rotate(-45deg);margin:0 auto;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4)}
-  .pv-here .l{font-size:10px;font-weight:700;color:#8a6a2a;background:#fff;padding:1px 6px;border-radius:5px;margin-top:4px;display:inline-block}
-  .pv-card{background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px 18px;box-shadow:0 8px 24px rgba(20,30,40,.06)}
-  .pv-card h3{margin:0 0 6px;font-family:"Space Grotesk";font-size:20px}
-  .pv-stat{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px}
-  .pv-stat.free{background:var(--free-soft);color:#0c6f60}.pv-stat.booked{background:var(--booked-soft);color:#8f3a30}
-  .pv-meta{display:flex;flex-direction:column;gap:8px;margin-top:12px;color:#3b434b;font-size:13px}
-  .pv-eq{display:flex;gap:10px;align-items:center;color:var(--muted)} .pv-eq svg{width:18px;height:18px}
-  .pv-btn{margin-top:14px;width:100%;background:var(--free);color:#fff;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
-  .pv-btn[disabled]{background:#c7ced5;cursor:not-allowed}
-  .pv-toggle{display:inline-flex;background:#1c1f23;border:1px solid #3a3f45;border-radius:9px;padding:3px;gap:2px}
-  .pv-toggle button{background:transparent;color:#c2c8ce;border:0;padding:6px 14px;border-radius:7px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
-  .pv-toggle button.on{background:var(--free);color:#fff}
-  @media(max-width:820px){.pv-view.on{grid-template-columns:1fr}}`;
+  /* Breite des Plans hier zentral einstellen */
+  :root{ --plan-w: 1000px; }
+
+  .pv-view{max-width:1500px; margin:0 auto; padding:18px 22px 0}
+  .pv-planwrap{position:relative; width:min(100%, var(--plan-w)); margin:0 auto;
+    background:#fff; border:1px solid var(--hair); border-radius:12px;
+    box-shadow:0 8px 24px rgba(20,30,40,.06); overflow:hidden}
+  .pv-planwrap img{display:block; width:100%; height:auto}
+  .pv-layer{position:absolute; inset:0}
+
+  .pv-m{position:absolute; transform:translate(-50%,-50%); cursor:pointer;
+    padding:14px; touch-action:manipulation; -webkit-tap-highlight-color:transparent}
+  .pv-m .r{width:34px; height:34px; border-radius:50%; border:3px solid #fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#fff; background:#9aa2ab;
+    box-shadow:0 2px 8px rgba(0,0,0,.35); transition:.2s}
+  .pv-m.free .r{background:var(--free)}
+  .pv-m.booked .r{background:var(--booked)}
+  .pv-m:active .r{transform:scale(1.18)}
+  .pv-m .t{position:absolute; top:48px; left:50%; transform:translateX(-50%);
+    white-space:nowrap; background:#181B1F; color:#fff; font-size:11px;
+    padding:3px 8px; border-radius:6px; pointer-events:none;
+    display:flex; gap:6px; align-items:baseline}
+  .pv-m .t .ts{opacity:.75; font-size:10px}
+
+  .pv-here{position:absolute; transform:translate(-50%,-100%); pointer-events:none; text-align:center}
+  .pv-here .p{width:20px; height:20px; border-radius:50% 50% 50% 0; background:var(--now);
+    transform:rotate(-45deg); margin:0 auto; border:2px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,.4)}
+  .pv-here .l{font-size:10px; font-weight:700; color:#8a6a2a; background:#fff;
+    padding:1px 6px; border-radius:5px; margin-top:4px; display:inline-block}
+
+  @media(max-width:820px){ :root{ --plan-w: 100%; } }`;
   const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
 
-  const tg=document.createElement("div"); tg.className="pv-toggle";
-  tg.innerHTML=`<button data-v="list" class="on">Liste</button><button data-v="plan">Plan</button>`;
-  const header=document.querySelector("header");
-  header.insertBefore(tg, header.querySelector(".brand").nextSibling);
-
+  /* Plan-Container VOR die Liste hängen */
   const view=document.createElement("div"); view.className="pv-view";
-  view.innerHTML=`<div class="pv-planwrap"><img id="pvImg" alt="Etagenplan"><div class="pv-layer" id="pvLayer"></div></div>
-    <div class="pv-side"><div class="pv-card" id="pvDetail"><h3>Raum wählen</h3>
-    <div style="color:var(--muted);font-size:13px">Tippe einen Raum im Plan an.</div></div></div>`;
-  document.querySelector("main").after(view);
+  view.innerHTML=`<div class="pv-planwrap"><img id="pvImg" alt="Etagenplan"><div class="pv-layer" id="pvLayer"></div></div>`;
+  document.querySelector("main").before(view);
   const layer=view.querySelector("#pvLayer"), img=view.querySelector("#pvImg");
-  let planActive=false, builtKey=null;
+  let builtKey=null;
 
   function planKey(){
     const p=new URLSearchParams(location.search), b=p.get("building"), f=p.get("floor");
@@ -877,45 +879,65 @@ function scheduleNightlyReload(){
   function buildPlan(){
     const key=planKey(), fp=CONFIG.floorplans[key];
     img.src=fp.image; builtKey=key; layer.innerHTML="";
-    if(fp.youAreHere){ const h=document.createElement("div"); h.className="pv-here";
+    if(fp.youAreHere){
+      const h=document.createElement("div"); h.className="pv-here";
       h.style.left=fp.youAreHere.x+"%"; h.style.top=fp.youAreHere.y+"%";
-      h.innerHTML=`<div class="p"></div><div class="l">Sie sind hier</div>`; layer.appendChild(h); }
-    roomsForKey(key).forEach(room=>{ const i=CONFIG.roomInfo[room];
+      h.innerHTML=`<div class="p"></div><div class="l">Sie sind hier</div>`;
+      layer.appendChild(h);
+    }
+    roomsForKey(key).forEach(room=>{
+      const i=CONFIG.roomInfo[room];
       const m=document.createElement("div"); m.className="pv-m"; m.dataset.room=room;
       m.style.left=i.planX+"%"; m.style.top=i.planY+"%";
-      m.innerHTML=`<div class="r">${ringText(room)}</div><div class="t">${roomShort(room)}</div>`;
-      m.onclick=()=>selectRoom(room); layer.appendChild(m); });
+      m.innerHTML=`<div class="r">${ringText(room)}</div>
+                   <div class="t"><b>${roomShort(room)}</b><span class="ts">…</span></div>`;
+      m.addEventListener("click", ()=>bookFromPlan(room));
+      layer.appendChild(m);
+    });
     colorMarkers();
   }
-  function colorMarkers(){
-    layer.querySelectorAll(".pv-m").forEach(m=>{ const s=statusOf(m.dataset.room);
-      m.classList.toggle("free", s.known && s.free); m.classList.toggle("booked", s.known && !s.free); });
-  }
-  function selectRoom(room){
-    layer.querySelectorAll(".pv-m").forEach(m=>m.classList.toggle("sel",m.dataset.room===room));
-    const i=CONFIG.roomInfo[room]||{}, s=statusOf(room), d=view.querySelector("#pvDetail");
-    const eq=(i.equipment && typeof equipmentIcons==="function")?equipmentIcons(i.equipment):"";
-    const statusHtml=s.known?`<span class="pv-stat ${s.free?'free':'booked'}">${s.free?(s.until?'Frei bis '+s.until:'Frei'):'Belegt bis '+s.until}</span>`
-      :`<span class="pv-stat" style="background:#eef1f4;color:#646e78">Lädt…</span>`;
-    d.innerHTML=`<h3>${roomShort(room)}</h3>${statusHtml}
-      <div class="pv-meta">${i.capacity?`<div>👤 <b>${i.capacity}</b> Personen</div>`:""}${eq?`<div class="pv-eq">${eq}</div>`:""}</div>
-      <button class="pv-btn" id="pvBook" ${s.known&&!s.free?"disabled":""}>${s.known&&!s.free?"Aktuell belegt":"Diesen Raum buchen"}</button>`;
-    const b=d.querySelector("#pvBook");
-    if(b) b.onclick=()=>{ const now=new Date();
-      let start=roundToSlot(new Date(now.getTime()+(CONFIG.slotMinutes||15)*60000));
-      let end=new Date(start.getTime()+(CONFIG.defaultDurationMin||30)*60000);
-      openModal(room,start,end); };
-  }
-  function setView(v){
-    planActive=(v==="plan"); document.body.classList.toggle("pv-active",planActive);
-    view.classList.toggle("on",planActive);
-    tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.v===v));
-    if(planActive){ if(builtKey!==planKey()) buildPlan(); else colorMarkers(); }
-  }
-  tg.querySelectorAll("button").forEach(x=>x.onclick=()=>setView(x.dataset.v));
 
-  if(typeof loadAll==="function"){ const prev=loadAll;
-    loadAll=async function(){ const r=await prev.apply(this,arguments); try{ if(planActive) colorMarkers(); }catch(e){} return r; }; }
+  function colorMarkers(){
+    layer.querySelectorAll(".pv-m").forEach(m=>{
+      const s=statusOf(m.dataset.room);
+      m.classList.toggle("free",   s.known && s.free);
+      m.classList.toggle("booked", s.known && !s.free);
+      const ts=m.querySelector(".ts");
+      if(ts) ts.textContent = !s.known ? "…"
+        : (s.free ? (s.until ? "frei bis "+s.until : "frei") : "belegt bis "+s.until);
+    });
+  }
+
+  /* Tippen auf einen Raum im Plan -> dasselbe Buchungs-Pop-up wie in der Liste */
+  function bookFromPlan(room){
+    const s=statusOf(room);
+    if(s.known && !s.free){
+      toast(`${roomShort(room)} ist aktuell belegt${s.until? " bis "+s.until : ""}.`, true);
+      return;
+    }
+    const now=new Date();
+    const start=roundToSlot(new Date(now.getTime()+(CONFIG.slotMinutes||15)*60000));
+    let end=new Date(start.getTime()+(CONFIG.defaultDurationMin||30)*60000);
+    const evs=(typeof kLastEvents!=="undefined" && kLastEvents[room]) || [];
+    const next=evs.filter(e=>e.start>start).sort((a,b)=>a.start-b.start)[0];
+    const {e:dayEnd}=dayBounds();
+    if(next && end>next.start) end=next.start;
+    if(end>dayEnd) end=dayEnd;
+    if(end<=start){ toast("Kein freier Slot mehr heute.", true); return; }
+    openModal(room, start, end);
+  }
+
+  /* Nach jedem Laden die Marker neu einfärben */
+  if(typeof loadAll==="function"){
+    const prev=loadAll;
+    loadAll=async function(){
+      const r=await prev.apply(this,arguments);
+      try{ if(builtKey!==planKey()) buildPlan(); else colorMarkers(); }catch(e){}
+      return r;
+    };
+  }
+
+  buildPlan();
 })();
 </script>
 </body>
