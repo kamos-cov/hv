@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Raumbelegung Meetingräume K12</title>
+<title>Meeting Room Booking K12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.google.apis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono;wght@400;500&display=swap" rel="stylesheet" />
@@ -458,7 +458,7 @@ function updateFloorUI(){
   const seg=document.getElementById("fswitch");
   if(seg) seg.querySelectorAll(".fbtn").forEach(b=>b.classList.toggle("on", b.dataset.key===currentFloor()));
   const t=document.querySelector("header .brand b");
-  const k=currentFloor(); if(t && k) t.textContent="Meetingräume "+k.replace("|"," / ");
+  const k=currentFloor(); if(t && k) t.textContent="Meeting rooms "+k.replace("|"," / ");
 }
 function switchFloor(key){
   if(!CONFIG.floorplans[key]) return;
