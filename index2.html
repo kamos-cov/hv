@@ -171,18 +171,18 @@
 <header>
   <img src="https://kamos-cov.github.io/hv/logo1.png" class="logo" alt="Covestro" />
   <div class="brand">
-    <b>Meetingräume K12</b>
+    <b>Meeting Rooms K12</b>
     <span class="date mono" id="todayLabel">–</span>
   </div>
   <div class="spacer"></div>
   <div class="legend">
-    <span><span class="dot free"></span>Frei</span>
-    <span><span class="dot booked"></span>Belegt</span>
-    <span><span class="dot now"></span>Jetzt</span>
+    <span><span class="dot free"></span>free</span>
+    <span><span class="dot booked"></span>booked</span>
+    <span><span class="dot now"></span>Now</span>
   </div>
   <span class="who" id="who"></span>
-  <button class="btn" id="refreshBtn" title="Aktualisieren">⟳ Aktualisieren</button>
-  <button class="btn" id="authBtn">Anmelden</button>
+  <button class="btn" id="refreshBtn" title="Aktualisieren">⟳ Refresh</button>
+  <button class="btn" id="authBtn">LogIn</button>
 </header>
 
 <main id="board">
@@ -198,24 +198,24 @@
     </div>
     <div class="mb">
       <div class="field">
-        <label for="mSubject">Titel</label>
-        <input id="mSubject" type="text" value="Ad-hoc Buchung" readonly tabindex="-1" />
+        <label for="mSubject">Title</label>
+        <input id="mSubject" type="text" value="Ad hoc booking" readonly tabindex="-1" />
       </div>
       <div class="row2">
         <div class="field">
-          <label for="mStart">Von</label>
+          <label for="mStart">From</label>
           <input id="mStart" type="time" step="900" />
         </div>
         <div class="field">
-          <label for="mEnd">Bis</label>
+          <label for="mEnd">to</label>
           <input id="mEnd" type="time" step="900" />
         </div>
       </div>
       <div class="err-msg" id="mErr"></div>
     </div>
     <div class="mf">
-      <button class="btn" id="mCancel">Abbrechen</button>
-      <button class="btn primary" id="mConfirm">Jetzt buchen</button>
+      <button class="btn" id="mCancel">Cancel</button>
+      <button class="btn primary" id="mConfirm">Book now</button>
     </div>
   </div>
 </div>
@@ -262,32 +262,32 @@ const CONFIG = {
   roomInfo:
   {
     /* ===== 5.OG – 8 Räume: echte RES-Adressen, Namen, Kapazität, Ausstattung und planX/planY (in %) eintragen ===== */
-    "RES_14128@covestro.com" : { name: "Raum 501", building:"K12", floor:"5.OG", capacity: 8,  equipment: ["monitor", "camera", "speaker"], planX:16, planY:90 },
-    "RES_13900@covestro.com" : { name: "Raum 502", building:"K12", floor:"5.OG", capacity: 12, equipment: ["beamer", "camera", "speaker"], planX:16, planY:14 },
-    "RES_14170@covestro.com" : { name: "Raum 509", building:"K12", floor:"5.OG", capacity: 16, equipment: ["beamer"], planX:27, planY:90 },
-    "RES_13844@covestro.com" : { name: "Raum 510", building:"K12", floor:"5.OG", capacity: 18, equipment: ["beamer", "camera", "speaker"], planX:27, planY:14 },
-    "RES_14171@covestro.com" : { name: "Raum 521", building:"K12", floor:"5.OG", capacity: 10, equipment: ["monitor", "camera", "speaker"], planX:39, planY:90},
-    "RES_14172@covestro.com" : { name: "Raum 522", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:39, planY:14 },
-    "RES_14173@covestro.com" : { name: "Raum 530", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:47, planY:14 },
-    "RES_14174@covestro.com" : { name: "Raum 550", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:57, planY:14 },
-    "RES_14175@covestro.com" : { name: "Raum 572", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:80.8, planY:14 },
+    "RES_14128@covestro.com" : { name: "Room 501", building:"K12", floor:"5.OG", capacity: 8,  equipment: ["monitor", "camera", "speaker"], planX:16, planY:90 },
+    "RES_13900@covestro.com" : { name: "Room 502", building:"K12", floor:"5.OG", capacity: 12, equipment: ["beamer", "camera", "speaker"], planX:16, planY:14 },
+    "RES_14170@covestro.com" : { name: "Room 509", building:"K12", floor:"5.OG", capacity: 16, equipment: ["beamer"], planX:27, planY:90 },
+    "RES_13844@covestro.com" : { name: "Room 510", building:"K12", floor:"5.OG", capacity: 18, equipment: ["beamer", "camera", "speaker"], planX:27, planY:14 },
+    "RES_14171@covestro.com" : { name: "Room 521", building:"K12", floor:"5.OG", capacity: 10, equipment: ["monitor", "camera", "speaker"], planX:39, planY:90},
+    "RES_14172@covestro.com" : { name: "Room 522", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:39, planY:14 },
+    "RES_14173@covestro.com" : { name: "Room 530", building:"K12", floor:"5.OG", capacity: 5,  equipment: ["monitor", "camera", "speaker"], planX:47, planY:14 },
+    "RES_14174@covestro.com" : { name: "Room 550", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:57, planY:14 },
+    "RES_14175@covestro.com" : { name: "Room 572", building:"K12", floor:"5.OG", capacity: 16, equipment: ["monitor", "camera", "speaker"], planX:80.8, planY:14 },
     /* ===== EG – 12 Räume: echte RES-Adressen, Namen, Kapazität, Ausstattung und planX/planY (in %) eintragen ===== */
-    "RES_10018@covestro.com" : { name: "Raum 002", building:"K12", floor:"EG", capacity: 12,  equipment: ["monitor", "camera", "speaker"], planX:8.3, planY:14 },
-    "RES_10020@covestro.com" : { name: "Raum 010", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:16.2, planY:14  },
-    "RES_10021@covestro.com" : { name: "Raum 014", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:21.4, planY:14 },
-    "RES_10023@covestro.com" : { name: "Raum 018", building:"K12", floor:"EG", capacity: 20,  equipment: ["beamer"],  planX:32.0, planY:14 },
-    "RES_10025@covestro.com" : { name: "Raum 050", building:"K12", floor:"EG", capacity: 12,  equipment: ["beamer"], planX:55.0, planY:14 },
-    "RES_10026@covestro.com" : { name: "Raum 058", building:"K12", floor:"EG", capacity: 12,  equipment: ["beamer"], planX:55.0, planY:14 },
-    "RES_10029@covestro.com" : { name: "Raum 066", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:67, planY:14 },
-    "RES_13910@covestro.com" : { name: "Raum 001", building:"K12", floor:"EG", capacity: 12,  equipment: ["monitor"], planX:8.1,  planY:85 },
-    "RES_13843@covestro.com" : { name: "Raum 009", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:18.1, planY:85 },
-    "RES_10022@covestro.com" : { name: "Raum 015", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:25.2, planY:85 },
-    "RES_10024@covestro.com" : { name: "Raum 021", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:31.7, planY:85 },
-    "RES_10027@covestro.com" : { name: "Raum 059", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:62.7, planY:85 },
-    "RES_10028@covestro.com" : { name: "Raum 063", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:69.3, planY:85 },
-    "RES_10030@covestro.com" : { name: "Raum 069", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:77.1, planY:85 },
-    "RES_10032@covestro.com" : { name: "Raum 075", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:83.3, planY:85 },
-    "RES_10033@covestro.com" : { name: "Raum 079", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:88.5, planY:85 },
+    "RES_13910@covestro.com" : { name: "Room 001", building:"K12", floor:"EG", capacity: 12,  equipment: ["monitor"], planX:8.1,  planY:85 },
+    "RES_10018@covestro.com" : { name: "Room 002", building:"K12", floor:"EG", capacity: 12,  equipment: ["monitor", "camera", "speaker"], planX:8.3, planY:14 },
+    "RES_13843@covestro.com" : { name: "Room 009", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:18.1, planY:85 },
+    "RES_10020@covestro.com" : { name: "Room 010", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:16.2, planY:14  },
+    "RES_10021@covestro.com" : { name: "Room 014", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:21.4, planY:14 },
+    "RES_10022@covestro.com" : { name: "Room 015", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:25.2, planY:85 },
+    "RES_10023@covestro.com" : { name: "Room 018", building:"K12", floor:"EG", capacity: 20,  equipment: ["beamer"], planX:32.0, planY:14 },
+    "RES_10024@covestro.com" : { name: "Room 021", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:31.7, planY:85 },
+    "RES_10025@covestro.com" : { name: "Room 050", building:"K12", floor:"EG", capacity: 12,  equipment: ["beamer"], planX:55.0, planY:14 },
+    "RES_10026@covestro.com" : { name: "Room 058", building:"K12", floor:"EG", capacity: 12,  equipment: ["beamer"], planX:55.0, planY:14 },
+    "RES_10027@covestro.com" : { name: "Room 059", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:62.7, planY:85 },
+    "RES_10028@covestro.com" : { name: "Room 063", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:69.3, planY:85 },
+    "RES_10029@covestro.com" : { name: "Room 066", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:67, planY:14 },
+    "RES_10030@covestro.com" : { name: "Room 069", building:"K12", floor:"EG", capacity: 10,  equipment: ["monitor", "camera", "speaker"], planX:77.1, planY:85 },
+    "RES_10032@covestro.com" : { name: "Room 075", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:83.3, planY:85 },
+    "RES_10033@covestro.com" : { name: "Room 079", building:"K12", floor:"EG", capacity: 8,   equipment: ["monitor", "camera", "speaker"], planX:88.5, planY:85 },
   },
   floorplans: {
     "K12|5.OG": { image: "https://kamos-cov.github.io/hv/plans/etagen-k12-5.svg", youAreHere: {x: 47, y: 70} },
@@ -499,12 +499,12 @@ function roomShort(room){
 const CAP_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg>`;
 
 const ICONS = {
-  camera:     {label:"Kamera",       svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 10.5 21 7v10l-6-3.5"/></svg>`},
+  camera:     {label:"Camera",       svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 10.5 21 7v10l-6-3.5"/></svg>`},
   beamer:     {label:"Beamer", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="15" height="8" rx="2"/><circle cx="9" cy="12" r="2.2"/><path d="M13.5 12h1M17.5 10.5l3-1.5v6l-3-1.5M6 16v1.5M13 16v1.5"/></svg>`},
   monitor:    {label:"Monitor",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></svg>`},
-  speaker:    {label:"Lautsprecher", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>`},
+  speaker:    {label:"Loudspeaker", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>`},
   tv:         {label:"Display",      svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="12" rx="1.5"/><path d="M8 21h8"/></svg>`},
-  phone:      {label:"Konferenztelefon", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>`},
+  phone:      {label:"Conference telephone", svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l1.5 5-2 1.5a12 12 0 0 0 6 6l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>`},
   whiteboard: {label:"Whiteboard",   svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20l1.5-4M15 20l-1.5-4"/></svg>`},
   wifi:       {label:"WLAN",         svg:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a11 11 0 0 1 14 0M8 12.5a6.5 6.5 0 0 1 8 0"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>`},
 };
@@ -592,11 +592,11 @@ function updatePill(room, events){
   const now=new Date();
   const current = events.find(ev=> now>=ev.start && now<ev.end);
   if(current){
-    pill.className="pill booked"; pill.textContent=`Belegt bis ${hhmm(current.end)}`;
+    pill.className="pill booked"; pill.textContent=`Booked until ${hhmm(current.end)}`;
   }else{
     const next = events.filter(ev=>ev.start>now).sort((a,b)=>a.start-b.start)[0];
     pill.className="pill free";
-    pill.textContent = next ? `Frei bis ${hhmm(next.start)}` : "Frei";
+    pill.textContent = next ? `Free until ${hhmm(next.start)}` : "Frei";
   }
 }
 
@@ -624,7 +624,7 @@ function handleTrackClick(e, track, room, events){
 
   // Überlappung?
   if(events.some(ev=> clicked>=ev.start && clicked<ev.end)){
-    toast("Dieser Zeitpunkt ist bereits belegt.", true); return;
+    toast("This time slot is already taken.", true); return;
   }
   // Standard-Ende, gedeckelt auf nächste Buchung / Tagesende
   let end=new Date(clicked.getTime()+CONFIG.defaultDurationMin*60000);
@@ -671,12 +671,12 @@ async function confirmBooking(){
   $("#mEnd").value   = hhmm(end);
 
   // Grundprüfungen
-  if(!(end > start)){ err.textContent = "Ende muss nach dem Start liegen."; return; }
-  if(start < new Date(Date.now()-60000)){ err.textContent = "Start liegt in der Vergangenheit."; return; }
+  if(!(end > start)){ err.textContent = "The end must come after the start."; return; }
+  if(start < new Date(Date.now()-60000)){ err.textContent = "The start is in the past."; return; }
 
   // Überlappung mit bestehenden Buchungen?
   const clash = (pendingBooking.events||[]).some(ev => start < ev.end && end > ev.start);
-  if(clash){ err.textContent = "In diesem Zeitraum ist der Raum bereits belegt."; return; }
+  if(clash){ err.textContent = "The room is already booked for this period."; return; }
 
   $("#mConfirm").disabled = true; err.textContent = "";
   try{
@@ -685,7 +685,7 @@ async function confirmBooking(){
     toast("Raum gebucht ✓");
     await loadAll();
   }catch(ex){
-    err.textContent = ex.message || "Buchung fehlgeschlagen.";
+    err.textContent = ex.message || "Booking failed.";
   }finally{
     $("#mConfirm").disabled = false;
   }
@@ -714,7 +714,7 @@ function showSetup(){
     <div class="notice">
       <h2>Einrichtung erforderlich</h2>
       <p>Trage zuerst <code>tenantId</code> und <code>clientId</code> oben im <code>CONFIG</code>-Block in <code>index.html</code> ein.</p>
-      <p>Hinterlege in der Azure-App-Registrierung unter <b>Authentifizierung → Single-Page-Application</b> exakt diese Redirect-URI:</p>
+      <p>In the Azure App Registry, configure the following under <b>Authentifizierung → Single-Page-Application</b> exakt diese Redirect-URI:</p>
       <p><code id="ru"></code></p>
       <p>Berechtigung (delegiert): <code>Calendars.ReadWrite.Shared</code>, <code>User.Read</code>, <code>openid</code>.</p>
     </div>`;
@@ -749,7 +749,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
     await loadAll();
     startAutoRefresh();
   }catch(ex){
-    toast("Anmeldung fehlgeschlagen: "+(ex.message||ex), true);
+    toast("Login failed: "+(ex.message||ex), true);
     console.error(ex);
   }
 });
@@ -798,7 +798,7 @@ async function loadAll(){
       anyOk = true;
     } else {
       if(kLastEvents[room]) renderRoom(room, kLastEvents[room]); // alten Stand halten
-      else renderError(room, res.reason?.message || "Fehler");
+      else renderError(room, res.reason?.message || "Error");
     }
   });
   onLoadOutcome(anyOk);
@@ -828,8 +828,8 @@ function startAutoRefresh(){
 function setStatus(state){
   const chip = document.getElementById("kStatus"); if(!chip) return;
   const dot = chip.querySelector(".kdot"); const txt = chip.querySelector(".ktxt");
-  if(state==="ok"){ dot.style.background="var(--free)"; txt.textContent="Aktualisiert "+hhmm(new Date()); }
-  else if(state==="stale"){ dot.style.background="var(--now)"; txt.textContent="Verbindung instabil…"; }
+  if(state==="ok"){ dot.style.background="var(--free)"; txt.textContent="Updated "+hhmm(new Date()); }
+  else if(state==="stale"){ dot.style.background="var(--now)"; txt.textContent="Connection unstable…"; }
   else { dot.style.background="var(--booked)"; txt.textContent="Keine Verbindung"; }
 }
 function showAuthGate(){ document.getElementById("kGate")?.classList.add("on"); }
@@ -897,9 +897,9 @@ function scheduleNightlyReload(){
   gate.id="kGate"; gate.className="kgate";
   gate.innerHTML = `
     <div class="kgate-box">
-      <div class="kgate-title">Anmeldung erforderlich</div>
-      <div class="kgate-sub">Die Sitzung ist abgelaufen. Zum Fortfahren bitte tippen.</div>
-      <button class="kgate-btn" id="kGateBtn">Anmelden</button>
+      <div class="kgate-title">Registration required</div>
+      <div class="kgate-sub">The session has expired. Please tap to continue.</div>
+      <button class="kgate-btn" id="kGateBtn">Log in</button>
     </div>`;
   document.body.appendChild(gate);
   document.getElementById("kGateBtn").onclick = ()=>{ try{ signIn(); }catch(e){ location.reload(); } };
@@ -960,7 +960,7 @@ function scheduleNightlyReload(){
   document.querySelector("main").before(view);
 
   const sep=document.createElement("div"); sep.className="pv-sep";
-  sep.innerHTML=`<span>Tagesübersicht</span>`;
+  sep.innerHTML=`<span>Daily overview</span>`;
   document.querySelector("main").before(sep);
   const layer=view.querySelector("#pvLayer"), img=view.querySelector("#pvImg");
   let builtKey=null;
@@ -986,7 +986,7 @@ function scheduleNightlyReload(){
     if(fp.youAreHere){
       const h=document.createElement("div"); h.className="pv-here";
       h.style.left=fp.youAreHere.x+"%"; h.style.top=fp.youAreHere.y+"%";
-      h.innerHTML=`<div class="p"></div><div class="l">Sie sind hier</div>`;
+      h.innerHTML=`<div class="p"></div><div class="l">You are here</div>`;
       layer.appendChild(h);
     }
     roomsForKey(key).forEach(room=>{
@@ -1009,7 +1009,7 @@ function scheduleNightlyReload(){
       m.classList.toggle("booked", s.known && !s.free);
       const ts=m.querySelector(".ts");
       if(ts) ts.textContent = !s.known ? "…"
-        : (s.free ? (s.until ? "frei bis "+s.until : "frei") : "belegt bis "+s.until);
+        : (s.free ? (s.until ? "available until "+s.until : "frei") : "booked until "+s.until);
     });
   }
 
@@ -1017,7 +1017,7 @@ function scheduleNightlyReload(){
   function bookFromPlan(room){
     const s=statusOf(room);
     if(s.known && !s.free){
-      toast(`${roomShort(room)} ist aktuell belegt${s.until? " bis "+s.until : ""}.`, true);
+      toast(`${roomShort(room)} is currently occupied${s.until? " until "+s.until : ""}.`, true);
       return;
     }
     const now=new Date();
@@ -1028,7 +1028,7 @@ function scheduleNightlyReload(){
     const {e:dayEnd}=dayBounds();
     if(next && end>next.start) end=next.start;
     if(end>dayEnd) end=dayEnd;
-    if(end<=start){ toast("Kein freier Slot mehr heute.", true); return; }
+    if(end<=start){ toast("No more free slots today.", true); return; }
     openModal(room, start, end);
   }
 
