@@ -726,7 +726,7 @@ function showSetup(){
    ============================================================ */
 function setToday(){
   const d=new Date();
-  const fmt=d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  const fmt=d.toLocaleDateString("en-US",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
   $("#todayLabel").textContent=fmt;
 }
 function startAutoRefresh(){
