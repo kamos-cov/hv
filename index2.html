@@ -176,8 +176,8 @@
   </div>
   <div class="spacer"></div>
   <div class="legend">
-    <span><span class="dot free"></span>free</span>
-    <span><span class="dot booked"></span>booked</span>
+    <span><span class="dot free"></span>Free</span>
+    <span><span class="dot booked"></span>Booked</span>
     <span><span class="dot now"></span>Now</span>
   </div>
   <span class="who" id="who"></span>
@@ -400,7 +400,7 @@ async function fetchRoom(room, token){
   }
   const data = await res.json();
   return (data.value||[]).map(ev=>({
-    subject: ev.subject || "Belegt",
+    subject: ev.subject || "Booked",
     start: new Date(ev.start.dateTime),
     end: new Date(ev.end.dateTime),
     allDay: ev.isAllDay,
@@ -522,7 +522,7 @@ function roomMeta(room){
   const info = CONFIG.roomInfo?.[room];
   if(!info) return `<div class="rsub mono">${room}</div>`; // Fallback: alte E-Mail-Zeile
   let html = `<div class="meta">`;
-  if(info.capacity) html += `<div class="cap">${CAP_ICON}<span>${info.capacity} Pers.</span></div>`;
+  if(info.capacity) html += `<div class="cap">${CAP_ICON}<span>${info.capacity} Ppl.</span></div>`;
   html += equipmentIcons(info.equipment);
   return html + `</div>`;
 }
@@ -567,7 +567,7 @@ function renderRoom(room, events){
     const b=document.createElement("div"); b.className="block";
     b.style.left=left+"%"; b.style.width=(right-left)+"%";
    // b.innerHTML=`<div class="bt">${escapeHtml(ev.subject)}</div>
-     b.innerHTML=`<div class="bt">Belegt</div>
+     b.innerHTML=`<div class="bt">Booked</div>
                  <div class="bh mono">${hhmm(ev.start)}–${hhmm(ev.end)}</div>`;
     b.addEventListener("click",e=>{ e.stopPropagation(); }); // belegt = nicht buchbar
     track.appendChild(b);
@@ -596,7 +596,7 @@ function updatePill(room, events){
   }else{
     const next = events.filter(ev=>ev.start>now).sort((a,b)=>a.start-b.start)[0];
     pill.className="pill free";
-    pill.textContent = next ? `Free until ${hhmm(next.start)}` : "Frei";
+    pill.textContent = next ? `Free until ${hhmm(next.start)}` : "Free";
   }
 }
 
@@ -632,7 +632,7 @@ function handleTrackClick(e, track, room, events){
   const {e:dayEnd}=dayBounds();
   if(next && end>next.start) end=next.start;
   if(end>dayEnd) end=dayEnd;
-  if(end<=clicked){ toast("Kein freier Slot ab hier.", true); return; }
+  if(end<=clicked){ toast("No free slots from here onwards.", true); return; }
 
   openModal(room, clicked, end);
 }
@@ -932,10 +932,16 @@ function scheduleNightlyReload(){
   .pv-m.free .r{background:var(--free)}
   .pv-m.booked .r{background:var(--booked)}
   .pv-m:active .r{transform:scale(1.18)}
+  /* 
   .pv-m .t{position:absolute; top:46px; left:50%; transform:translateX(-50%);
     white-space:nowrap; background:#181B1F; color:#fff; font-size:10.5px;
-    padding:2px 7px; border-radius:6px; pointer-events:none}
+    padding:2px 7px; border-radius:6px; pointer-events:none} 
   .pv-m.up .t{top:auto; bottom:46px}
+  */
+  .pv-m .t{position:absolute; top:40px; left:50%; transform:translateX(-50%);
+  writing-mode:vertical-rl; white-space:nowrap; background:#181B1F; color:#fff; font-size:10.5px;
+    padding:6px 3px; border-radius:6px; pointer-events:none}
+  .pv-m.up .t{top:auto; bottom:40px}
 
   .pv-here{position:absolute; transform:translate(-50%,-100%); pointer-events:none; text-align:center}
   .pv-here .p{width:20px; height:20px; border-radius:50% 50% 50% 0; background:var(--now);
@@ -1009,7 +1015,7 @@ function scheduleNightlyReload(){
       m.classList.toggle("booked", s.known && !s.free);
       const ts=m.querySelector(".ts");
       if(ts) ts.textContent = !s.known ? "…"
-        : (s.free ? (s.until ? "available until "+s.until : "frei") : "booked until "+s.until);
+        : (s.free ? (s.until ? "available until "+s.until : "free") : "booked until "+s.until);
     });
   }
 
