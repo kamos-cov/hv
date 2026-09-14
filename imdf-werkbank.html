@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMDF-Werkbank</title>
+<style>
+:root{
+  --paper:#f6f7f4; --panel:#ffffff; --ink:#15191c; --ink-soft:#5d666c;
+  --rule:#d8ddd6; --rule-soft:#e9ece7;
+  --plan-red:#c8322b; --plan-blue:#045a8b; --plan-green:#098e2f;
+  --amber:#b06a00; --focus:#045a8b;
+  --shadow:0 1px 0 rgba(21,25,28,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12151a; --panel:#191d23; --ink:#e6eae6; --ink-soft:#97a1a8;
+    --rule:#2c333b; --rule-soft:#232931;
+    --plan-red:#e4655d; --plan-blue:#4aa3d6; --plan-green:#43ba63;
+    --amber:#d9962f; --focus:#4aa3d6;
+    --shadow:0 1px 0 rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12151a; --panel:#191d23; --ink:#e6eae6; --ink-soft:#97a1a8;
+  --rule:#2c333b; --rule-soft:#232931;
+  --plan-red:#e4655d; --plan-blue:#4aa3d6; --plan-green:#43ba63;
+  --amber:#d9962f; --focus:#4aa3d6;
+  --shadow:0 1px 0 rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.5;
+  background-image:linear-gradient(var(--rule-soft) 1px,transparent 1px),linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 90px}
+header.top{margin:14px 0 26px}
+h1{font-size:29px;line-height:1.15;font-weight:600;margin:0 0 6px;letter-spacing:-.015em}
+.lede{color:var(--ink-soft);max-width:62ch;margin:0}
+.mono{font-family:ui-monospace,SFMono-Regular,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+section.card{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:18px;margin:0 0 18px;box-shadow:var(--shadow)}
+h2{font-size:17px;font-weight:600;margin:0 0 4px}
+h3{font-size:15px;font-weight:600;margin:0}
+.hint{color:var(--ink-soft);font-size:13.5px;margin:0 0 14px;max-width:70ch}
+
+/* Ablage */
+#drop{border:1.5px dashed var(--rule);border-radius:4px;padding:34px 18px;text-align:center;cursor:pointer;background:transparent;transition:border-color .12s,background .12s}
+#drop:hover,#drop.hot{border-color:var(--plan-blue);background:color-mix(in srgb,var(--plan-blue) 6%,transparent)}
+#drop strong{display:block;font-weight:600;margin-bottom:4px}
+#drop span{color:var(--ink-soft);font-size:13.5px}
+
+/* Formularteile */
+label.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:3px}
+input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 8px;width:100%}
+input.mono{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+input:focus-visible,select:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+
+button{font:inherit;cursor:pointer;border:1px solid var(--rule);background:var(--panel);color:var(--ink);border-radius:3px;padding:7px 13px}
+button:hover{border-color:var(--ink-soft)}
+button.primary{background:var(--plan-blue);border-color:var(--plan-blue);color:#fff;font-weight:500}
+button.primary:hover{filter:brightness(1.1)}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* Gebäude */
+.bld-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:14px}
+.key{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;font-size:13px;color:var(--ink-soft)}
+
+.floortabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.floortabs button{padding:5px 10px;font-size:13.5px}
+.floortabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.planbox{border:1px solid var(--rule);border-radius:3px;background:var(--panel);overflow-x:auto;padding:6px}
+.planbox svg{display:block;min-width:640px;width:100%;height:auto}
+.planbox polygon{stroke:var(--rule);stroke-width:.06;cursor:pointer}
+.planbox polygon:hover{stroke:var(--ink);stroke-width:.16}
+.planbox polygon.sel{stroke:var(--plan-red);stroke-width:.24}
+.planbox text{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;pointer-events:none;font-weight:500}
+
+.palette{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0 6px}
+.sw{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:3px;padding:4px 9px;font-size:13px;background:var(--panel);cursor:pointer}
+.sw i{width:11px;height:11px;border-radius:2px;display:block;border:1px solid rgba(0,0,0,.18)}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:500;color:var(--ink-soft);font-size:12.5px;border-bottom:1px solid var(--rule);padding:5px 6px}
+td{padding:4px 6px;border-bottom:1px solid var(--rule-soft)}
+td.n{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+.tablewrap{max-height:340px;overflow:auto;border:1px solid var(--rule);border-radius:3px}
+tr.off td{opacity:.45}
+
+.note{font-size:13px;border-left:2px solid var(--amber);padding:6px 0 6px 11px;color:var(--ink-soft);margin:12px 0}
+.ok{border-left-color:var(--plan-green)}
+.bad{border-left-color:var(--plan-red);color:var(--plan-red)}
+.tally{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink-soft);margin:10px 0 0}
+.tally b{color:var(--ink);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.chk{display:flex;align-items:center;gap:7px;font-size:13.5px}
+.chk input{width:auto}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>IMDF-Werkbank</h1>
+  <p class="lede">Planon-Etagenpläne als SVG einlesen, Räume einordnen, georeferenzieren — heraus kommt je Gebäude ein IMDF-Paket für Microsoft Places.</p>
+  <p class="lede" style="margin-top:8px;font-size:13.5px">Läuft vollständig im Browser. Keine Internetverbindung, kein Server, keine Zeichnung verlässt diesen Rechner.</p>
+</header>
+
+<section class="card">
+  <div id="drop" tabindex="0" role="button" aria-label="SVG-Dateien auswählen">
+    <strong>SVG-Dateien hierher ziehen</strong>
+    <span>oder klicken zum Auswählen — mehrere Etagen und mehrere Gebäude auf einmal</span>
+  </div>
+  <input type="file" id="picker" accept=".svg,image/svg+xml" multiple hidden>
+  <p class="hint" style="margin:12px 0 0">Der Dateiname liefert Gebäude und Etage, etwa <span class="mono">LEVK012-G101-OG05.svg</span>. Alles lässt sich danach überschreiben.</p>
+</section>
+
+<div id="buildings"></div>
+
+<section class="card" id="empty">
+  <h2>Was das Werkzeug erzeugt</h2>
+  <p class="hint">Ein ZIP je Gebäude mit <span class="mono">building.geojson</span>, <span class="mono">footprint.geojson</span>, <span class="mono">level.geojson</span> und <span class="mono">unit.geojson</span> — direkt gezippt, ohne Unterordner, so wie <span class="mono">Import-MapCorrelations</span> es erwartet. Räume, Flure, Treppen, Aufzüge und Schächte werden aus der Zeichnung vorbelegt; die Zuordnung korrigierst du im Plan per Klick.</p>
+</section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------- Kategorien */
+const CATS = {
+  conferenceroom:{de:"Besprechungsraum", en:"Meeting room", c:"#045a8b"},
+  huddleroom:    {de:"Kleinbesprechung", en:"Huddle room",  c:"#2d7fa8"},
+  office:        {de:"Büro",             en:"Office",       c:"#f0e3c8"},
+  room:          {de:"Raum",             en:"Room",         c:"#f6ecd8"},
+  walkway:       {de:"Flur",             en:"Walkway",      c:"#eceeea"},
+  lobby:         {de:"Foyer",            en:"Lobby",        c:"#d9c7e8"},
+  stairs:        {de:"Treppe",           en:"Staircase",    c:"#c9b37a"},
+  elevator:      {de:"Aufzug",           en:"Elevator",     c:"#9ea5a8"},
+  restroom:      {de:"WC",               en:"Restroom",     c:"#9fd4a8"},
+  kitchen:       {de:"Teeküche",         en:"Kitchenette",  c:"#f2a65a"},
+  phoneroom:     {de:"Telefonbox",       en:"Phone room",   c:"#c7d8ef"},
+  storage:       {de:"Lager",            en:"Storage",      c:"#cfc6ba"},
+  serverroom:    {de:"Technikraum",      en:"Server room",  c:"#8f9bb3"},
+  nonpublic:     {de:"Schacht / intern", en:"Non-public",   c:"#5d666c"},
+  terrace:       {de:"Terrasse",         en:"Terrace",      c:"#cfe2c2"},
+  unspecified:   {de:"Ohne Angabe",      en:"Unspecified",  c:"#e4e7e2"}
+};
+const NAMED = new Set(["stairs","elevator","restroom","kitchen","lobby","terrace","serverroom","storage"]);
+
+/* ---------------------------------------------------------------- Geometrie */
+const sArea = r => { let a=0; for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length]; a+=p[0]*q[1]-q[0]*p[1];} return a/2; };
+const absArea = r => Math.abs(sArea(r));
+function perim(r){ let s=0; for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length]; s+=Math.hypot(q[0]-p[0],q[1]-p[1]);} return s; }
+function inside(pt,poly){
+  let ins=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const [xi,yi]=poly[i],[xj,yj]=poly[j];
+    if((yi>pt[1])!==(yj>pt[1]) && pt[0] < (xj-xi)*(pt[1]-yi)/(yj-yi)+xi) ins=!ins;
+  }
+  return ins;
+}
+const inSpace = (pt,sp) => inside(pt,sp.rings[0]) && !sp.rings.slice(1).some(h=>inside(pt,h));
+function centroid(r){
+  let a=0,x=0,y=0;
+  for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length],f=p[0]*q[1]-q[0]*p[1];a+=f;x+=(p[0]+q[0])*f;y+=(p[1]+q[1])*f;}
+  a*=3; return a?[x/a,y/a]:r[0];
+}
+function bbox(pts){
+  let a=1/0,b=1/0,c=-1/0,d=-1/0;
+  for(const p of pts){ if(p[0]<a)a=p[0]; if(p[1]<b)b=p[1]; if(p[0]>c)c=p[0]; if(p[1]>d)d=p[1]; }
+  return [a,b,c,d];
+}
+function dedupe(r){
+  const o=[];
+  for(const p of r){ const l=o[o.length-1]; if(!l||Math.abs(p[0]-l[0])>1e-6||Math.abs(p[1]-l[1])>1e-6) o.push(p); }
+  if(o.length>1){const f=o[0],l=o[o.length-1]; if(Math.abs(f[0]-l[0])<1e-6&&Math.abs(f[1]-l[1])<1e-6) o.pop();}
+  return o;
+}
+function dropCollinear(r){
+  let out=r.slice(),changed=true;
+  while(changed&&out.length>3){
+    changed=false;
+    for(let i=0;i<out.length;i++){
+      const a=out[(i-1+out.length)%out.length],b=out[i],c=out[(i+1)%out.length];
+      if(Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))<1e-7){ out.splice(i,1); changed=true; break; }
+    }
+  }
+  return out;
+}
+/* zerlegt einen selbstberührenden Ring an doppelten Stützpunkten */
+function splitSeam(ring){
+  const out=[],stack=[ring.slice()];
+  let guard=0;
+  while(stack.length && guard++<400){
+    const r=stack.pop(); let done=true;
+    outer:
+    for(let i=0;i<r.length;i++) for(let j=i+2;j<r.length;j++){
+      if(Math.abs(r[i][0]-r[j][0])<1e-6 && Math.abs(r[i][1]-r[j][1])<1e-6){
+        const a=r.slice(i,j), b=r.slice(0,i).concat(r.slice(j));
+        if(a.length>=3) stack.push(a);
+        if(b.length>=3) stack.push(b);
+        done=false; break outer;
+      }
+    }
+    if(done && r.length>=3 && absArea(r)>1e-5) out.push(r);
+  }
+  return out.sort((x,y)=>absArea(y)-absArea(x));
+}
+
+/* ---------------------------------------------------------------- SVG-Parser */
+function pathPoints(d){
+  const toks = d.match(/[MmLlHhVvCcSsQqTtAaZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || [];
+  const subs=[]; let cur=[],cx=0,cy=0,sx=0,sy=0,cmd=null,i=0;
+  const push=(x,y)=>{cur.push([x,y]);cx=x;cy=y;};
+  while(i<toks.length){
+    const t=toks[i];
+    if(/^[A-Za-z]$/.test(t)){ cmd=t; i++;
+      if(cmd==='Z'||cmd==='z'){ if(cur.length){subs.push(cur);cur=[];} cx=sx;cy=sy; }
+      continue;
+    }
+    const n=k=>parseFloat(toks[i+k]);
+    const rel=cmd===cmd.toLowerCase(), C=cmd.toUpperCase();
+    if(C==='M'){ const x=rel?cx+n(0):n(0), y=rel?cy+n(1):n(1); if(cur.length){subs.push(cur);} cur=[]; push(x,y); sx=x;sy=y; i+=2; cmd=rel?'l':'L'; }
+    else if(C==='L'){ push(rel?cx+n(0):n(0), rel?cy+n(1):n(1)); i+=2; }
+    else if(C==='H'){ push(rel?cx+n(0):n(0), cy); i+=1; }
+    else if(C==='V'){ push(cx, rel?cy+n(0):n(0)); i+=1; }
+    else if(C==='C'){ push(rel?cx+n(4):n(4), rel?cy+n(5):n(5)); i+=6; }
+    else if(C==='S'||C==='Q'){ push(rel?cx+n(2):n(2), rel?cy+n(3):n(3)); i+=4; }
+    else if(C==='T'){ push(rel?cx+n(0):n(0), rel?cy+n(1):n(1)); i+=2; }
+    else if(C==='A'){ arcTo(cur,cx,cy,n(0),n(1),n(3),n(4),rel?cx+n(5):n(5),rel?cy+n(6):n(6)); const l=cur[cur.length-1]; cx=l[0];cy=l[1]; i+=7; }
+    else i++;
+  }
+  if(cur.length) subs.push(cur);
+  return subs;
+}
+function arcTo(out,x0,y0,rx,ry,laf,sf,x1,y1){
+  if(!rx||!ry){ out.push([x1,y1]); return; }
+  const dx=(x0-x1)/2, dy=(y0-y1)/2;
+  let lam=dx*dx/(rx*rx)+dy*dy/(ry*ry);
+  if(lam>1){ const s=Math.sqrt(lam); rx*=s; ry*=s; }
+  const num=rx*rx*ry*ry-rx*rx*dy*dy-ry*ry*dx*dx, den=rx*rx*dy*dy+ry*ry*dx*dx;
+  let co = den? Math.sqrt(Math.max(num,0)/den) : 0;
+  if(laf===sf) co=-co;
+  const cx=co*rx*dy/ry+(x0+x1)/2, cy=-co*ry*dx/rx+(y0+y1)/2;
+  const t0=Math.atan2((y0-cy)/ry,(x0-cx)/rx);
+  let t1=Math.atan2((y1-cy)/ry,(x1-cx)/rx), dt=t1-t0;
+  if(sf && dt<0) dt+=2*Math.PI;
+  if(!sf && dt>0) dt-=2*Math.PI;
+  const n=Math.max(4,Math.ceil(Math.abs(dt)/0.25));
+  for(let k=1;k<=n;k++) out.push([cx+rx*Math.cos(t0+dt*k/n), cy+ry*Math.sin(t0+dt*k/n)]);
+}
+
+function layerPoints(doc){
+  const lifts=[],stairs=[];
+  doc.querySelectorAll('[layer]').forEach(el=>{
+    const lay=el.getAttribute('layer')||"";
+    const bucket = /Aufzuege/i.test(lay) ? lifts : /Treppen/i.test(lay) ? stairs : null;
+    if(!bucket) return;
+    const tag=el.tagName.toLowerCase();
+    if(tag==='line'){
+      const g=k=>parseFloat(el.getAttribute(k));
+      bucket.push([g('x1'),g('y1')],[g('x2'),g('y2')],[(g('x1')+g('x2'))/2,(g('y1')+g('y2'))/2]);
+    } else if(tag==='polyline'||tag==='polygon'){
+      const v=(el.getAttribute('points')||"").match(/-?\d*\.?\d+/g)||[];
+      for(let i=0;i+1<v.length;i+=2) bucket.push([+v[i],+v[i+1]]);
+    } else if(tag==='rect'){
+      const g=k=>parseFloat(el.getAttribute(k)||0);
+      const x=g('x'),y=g('y'),w=g('width'),h=g('height');
+      bucket.push([x,y],[x+w,y],[x,y+h],[x+w,y+h],[x+w/2,y+h/2]);
+    } else if(tag==='circle'){
+      bucket.push([parseFloat(el.getAttribute('cx')),parseFloat(el.getAttribute('cy'))]);
+    } else if(tag==='path'){
+      for(const s of pathPoints(el.getAttribute('d')||"")) for(const p of s) bucket.push(p);
+    }
+  });
+  return {lifts,stairs};
+}
+
+function guessFloor(name){
+  const base=name.replace(/\.svg$/i,"");
+  const m=base.match(/(?:^|[-_ ])((?:EG|OG|UG|KG|ZG)\s*-?\s*\d{0,2}|E\d{2}|L\d{1,2})$/i);
+  let code = m ? m[1].replace(/\s|-/g,"").toUpperCase() : "";
+  let bld  = m ? base.slice(0,base.length-m[1].length).replace(/[-_ ]+$/,"") : base;
+  let ord=0, de="Erdgeschoss", short="EG";
+  if(code){
+    const num=parseInt((code.match(/\d+/)||["0"])[0],10);
+    if(/^OG/.test(code)){ ord=num; de=num+". Obergeschoss"; short=num+".OG"; }
+    else if(/^(UG|KG)/.test(code)){ ord=-Math.max(num,1); de=(num||1)+". Untergeschoss"; short=(num||1)+".UG"; }
+    else { ord=0; de="Erdgeschoss"; short="EG"; }
+  } else code="EG00";
+  return {bld:bld||"GEBAEUDE", code, ord, de, short};
+}
+
+function parseSvg(text,fileName){
+  const doc=new DOMParser().parseFromString(text,"image/svg+xml");
+  if(doc.querySelector("parsererror")) throw new Error("Die Datei ließ sich nicht als SVG lesen.");
+  const raw=[...doc.querySelectorAll('path')].filter(p=>(p.getAttribute('fmobjecttype')||"")==="Space");
+  if(!raw.length) throw new Error("Keine Raumflächen gefunden. Erwartet werden Pfade mit fmobjecttype=\"Space\" (Planon-Export).");
+
+  /* Beschriftungen: rect[ref-id="Space-<objectid>"] + Text im selben Knoten */
+  const labels={};
+  doc.querySelectorAll('[ref-id]').forEach(r=>{
+    const m=(r.getAttribute('ref-id')||"").match(/Space-(\w+)/); if(!m) return;
+    const t=r.parentElement && r.parentElement.querySelector('text'); if(!t) return;
+    const lines=[...t.querySelectorAll('tspan')].map(s=>s.textContent.trim()).filter(Boolean);
+    if(lines.length) labels[m[1]]=lines;
+  });
+
+  const {lifts,stairs}=layerPoints(doc);
+  const spaces=raw.map((p,idx)=>{
+    let subs=pathPoints(p.getAttribute('d')||"").map(dedupe).filter(r=>r.length>=3);
+    subs=subs.flatMap(splitSeam);
+    subs.sort((a,b)=>absArea(b)-absArea(a));
+    const oid=p.getAttribute('objectid')||("i"+(p.getAttribute('internalid')||idx));
+    const ipx=parseFloat(p.getAttribute('xinnerpoint')), ipy=parseFloat(p.getAttribute('yinnerpoint'));
+    const area=absArea(subs[0])-subs.slice(1).reduce((s,r)=>s+absArea(r),0);
+    return {oid, idx, rings:subs, area,
+            ip:(isFinite(ipx)&&isFinite(ipy))?[ipx,ipy]:centroid(subs[0]),
+            label:labels[oid]||null};
+  }).filter(s=>s.rings.length && s.area>0.05);
+
+  /* Innenpunkt prüfen, sonst Rasterprobe */
+  for(const s of spaces){
+    if(inSpace(s.ip,s)) continue;
+    const c=centroid(s.rings[0]);
+    if(inSpace(c,s)){ s.ip=c; continue; }
+    const [x0,y0,x1,y1]=bbox(s.rings[0]); let best=null,bd=-1;
+    for(let a=1;a<12;a++) for(let b=1;b<12;b++){
+      const q=[x0+(x1-x0)*a/12, y0+(y1-y0)*b/12];
+      if(!inSpace(q,s)) continue;
+      let d=1/0;
+      for(const r of s.rings) for(let i=0;i<r.length;i++){
+        const p1=r[i],p2=r[(i+1)%r.length];
+        d=Math.min(d, Math.hypot(q[0]-p1[0],q[1]-p1[1]), Math.hypot(q[0]-p2[0],q[1]-p2[1]));
+      }
+      if(d>bd){bd=d;best=q;}
+    }
+    if(best) s.ip=best;
+  }
+
+  /* Enthaltene Flächen (z. B. Aufzugskabine im Schacht) ausschließen */
+  for(const s of spaces){
+    s.contained = spaces.some(o=>o!==s && o.area>s.area*1.15 && inSpace(s.ip,o));
+  }
+
+  /* Vorbelegung */
+  for(const s of spaces){
+    const nStair=stairs.reduce((n,p)=>n+(inSpace(p,s)?1:0),0);
+    const nLift =lifts .reduce((n,p)=>n+(inSpace(p,s)?1:0),0);
+    const width = 2*s.area/perim(s.rings[0]);
+    let cat="room", num=null, alt=null;
+    if(s.label){
+      num=s.label[0];
+      alt=s.label.slice(1).join(" ")||null;
+      const txt=s.label.join(" ");
+      if(/Vorraum/i.test(txt)) cat="lobby";
+      else if(/Besprechung|Meeting|Konferenz/i.test(txt)) cat="conferenceroom";
+    }
+    if(cat==="room"){
+      if(nLift>=4) cat="elevator";
+      else if(nStair>=20 && s.area<90) cat="stairs";
+      else if(s.area<2.5) cat="nonpublic";
+      else if(width<2.2 && s.area>15) cat="walkway";
+    }
+    s.cat=cat; s.num=num; s.alt=alt;
+    s.off=s.contained;
+  }
+  const f=guessFloor(fileName);
+  return {file:fileName, bld:f.bld, code:f.code, ordinal:f.ord, nameDe:f.de, shortDe:f.short, spaces};
+}
+
+/* -------------------------------------------------- Umriss über Rasterspur */
+function outlineOf(floors, px=20, bridge=0.7){
+  const pts=[]; for(const fl of floors) for(const s of fl.spaces) if(!s.off) for(const p of s.rings[0]) pts.push(p);
+  if(!pts.length) return [];
+  const [x0,y0,x1,y1]=bbox(pts), pad=2;
+  const W=Math.ceil((x1-x0+2*pad)*px), H=Math.ceil((y1-y0+2*pad)*px);
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  const g=cv.getContext("2d",{willReadFrequently:true});
+  const X=x=>(x-x0+pad)*px, Y=y=>H-(y-y0+pad)*px;
+  g.fillStyle="#000"; g.strokeStyle="#000"; g.lineWidth=bridge*px; g.lineJoin="round"; g.lineCap="round";
+  for(const fl of floors) for(const s of fl.spaces){
+    if(s.off) continue;
+    g.beginPath();
+    const r=s.rings[0]; g.moveTo(X(r[0][0]),Y(r[0][1]));
+    for(let i=1;i<r.length;i++) g.lineTo(X(r[i][0]),Y(r[i][1]));
+    g.closePath(); g.fill(); g.stroke();
+  }
+  const d=g.getImageData(0,0,W,H).data;
+  const on=(x,y)=> x>=0&&y>=0&&x<W&&y<H && d[(y*W+x)*4+3]>40;
+  let sx=-1,sy=-1;
+  for(let y=0;y<H&&sx<0;y++) for(let x=0;x<W;x++) if(on(x,y)){sx=x;sy=y;break;}
+  if(sx<0) return [];
+  /* Moore-Nachbarschaft */
+  const dirs=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+  const path=[]; let cx=sx,cy=sy,dir=6,guard=0;
+  do{
+    path.push([cx,cy]); let moved=false;
+    for(let k=0;k<8;k++){
+      const nd=(dir+6+k)%8, nx=cx+dirs[nd][0], ny=cy+dirs[nd][1];
+      if(on(nx,ny)){ cx=nx; cy=ny; dir=nd; moved=true; break; }
+    }
+    if(!moved) break;
+  } while((cx!==sx||cy!==sy) && guard++<400000);
+  const ring=path.map(([x,y])=>[x/px+x0-pad,(H-y)/px+y0-pad]);
+  return rdp(ring,0.18);
+}
+function rdp(pts,eps){
+  if(pts.length<4) return pts;
+  const keep=new Array(pts.length).fill(false); keep[0]=keep[pts.length-1]=true;
+  const st=[[0,pts.length-1]];
+  while(st.length){
+    const [a,b]=st.pop(); let best=-1,bd=eps;
+    const [ax,ay]=pts[a],[bx,by]=pts[b], dx=bx-ax, dy=by-ay, L=Math.hypot(dx,dy)||1;
+    for(let i=a+1;i<b;i++){
+      const d=Math.abs((pts[i][0]-ax)*dy-(pts[i][1]-ay)*dx)/L;
+      if(d>bd){bd=d;best=i;}
+    }
+    if(best>0){ keep[best]=true; st.push([a,best],[best,b]); }
+  }
+  return pts.filter((_,i)=>keep[i]);
+}
+
+/* ------------------------------------------------- ZIP ohne Fremdbibliothek */
+const CRCT=(()=>{const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(buf){let c=0xFFFFFFFF;for(let i=0;i<buf.length;i++)c=CRCT[(c^buf[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+async function deflateRaw(buf){
+  if(typeof CompressionStream!=="function") return null;
+  try{
+    const cs=new CompressionStream("deflate-raw");
+    const w=cs.writable.getWriter(); w.write(buf); w.close();
+    return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  }catch(e){ return null; }
+}
+async function makeZip(entries){
+  const enc=new TextEncoder(), parts=[], central=[];
+  let offset=0;
+  const now=new Date();
+  const dosTime=((now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1))&0xFFFF;
+  const dosDate=(((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate())&0xFFFF;
+  for(const [name,text] of entries){
+    const nameB=enc.encode(name), raw=enc.encode(text);
+    const packed=await deflateRaw(raw);
+    const method=packed?8:0, data=packed||raw;
+    const crc=crc32(raw);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true);
+    lh.setUint16(8,method,true); lh.setUint16(10,dosTime,true); lh.setUint16(12,dosDate,true);
+    lh.setUint32(14,crc,true); lh.setUint32(18,data.length,true); lh.setUint32(22,raw.length,true);
+    lh.setUint16(26,nameB.length,true); lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nameB,data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint16(8,0x0800,true); ch.setUint16(10,method,true);
+    ch.setUint16(12,dosTime,true); ch.setUint16(14,dosDate,true);
+    ch.setUint32(16,crc,true); ch.setUint32(20,data.length,true); ch.setUint32(24,raw.length,true);
+    ch.setUint16(28,nameB.length,true); ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer),nameB);
+    offset+=30+nameB.length+data.length;
+  }
+  const cdSize=central.reduce((n,a)=>n+a.length,0);
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true);
+  eo.setUint16(8,entries.length,true); eo.setUint16(10,entries.length,true);
+  eo.setUint32(12,cdSize,true); eo.setUint32(16,offset,true);
+  return new Blob([...parts,...central,new Uint8Array(eo.buffer)],{type:"application/zip"});
+}
+async function saveFile(name,blob){
+  if(window.claude && typeof window.claude.use==="function"){
+    const dl=await window.claude.use("downloads");
+    if(dl){ await dl.save({filename:name,data:blob}); return; }
+  }
+  const url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+
+/* ---------------------------------------------------------------- UUID v5 */
+const NS = [0x6f,0x1c,0x2b,0x1e,0x7a,0x0d,0x4c,0x55,0x9f,0x3e,0x4b,0x1d,0x2c,0x3a,0x5e,0x77];
+async function uuid5(name){
+  const enc=new TextEncoder().encode(name);
+  const buf=new Uint8Array(16+enc.length); buf.set(NS,0); buf.set(enc,16);
+  const h=new Uint8Array(await crypto.subtle.digest("SHA-1",buf)).slice(0,16);
+  h[6]=(h[6]&0x0f)|0x50; h[8]=(h[8]&0x3f)|0x80;
+  const s=[...h].map(b=>b.toString(16).padStart(2,"0")).join("");
+  return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;
+}
+
+/* ---------------------------------------------------------------- Zustand */
+const state={buildings:new Map()};
+const $=s=>document.querySelector(s);
+let activePaint=null;
+
+function buildingOf(key){
+  if(!state.buildings.has(key))
+    state.buildings.set(key,{key, name:key.split("-")[0]||key, floors:[],
+      lat:"", lon:"", rot:0, dE:0, dN:0, corner:"sw", trim:true, active:0, msg:null});
+  return state.buildings.get(key);
+}
+
+/* ---------------------------------------------------------------- Dateien */
+async function addFiles(list){
+  const errs=[];
+  for(const file of list){
+    if(!/\.svg$/i.test(file.name)){ errs.push(`${file.name}: keine SVG-Datei`); continue; }
+    try{
+      const fl=parseSvg(await file.text(), file.name);
+      const b=buildingOf(fl.bld);
+      const i=b.floors.findIndex(x=>x.file===fl.file);
+      if(i>=0) b.floors[i]=fl; else b.floors.push(fl);
+      b.floors.sort((a,c)=>a.ordinal-c.ordinal);
+    }catch(e){ errs.push(`${file.name}: ${e.message}`); }
+  }
+  render();
+  if(errs.length) alert(errs.join("\n"));
+}
+
+/* ---------------------------------------------------------------- Rendern */
+function render(){
+  $("#empty").style.display = state.buildings.size ? "none" : "";
+  const root=$("#buildings"); root.innerHTML="";
+  for(const b of state.buildings.values()) root.appendChild(buildingCard(b));
+}
+
+function buildingCard(b){
+  const sec=document.createElement("section"); sec.className="card";
+  const anchorLabels={sw:"Südwest-Ecke",nw:"Nordwest-Ecke",se:"Südost-Ecke",ne:"Nordost-Ecke",c:"Mittelpunkt"};
+
+  const head=document.createElement("div"); head.className="bld-head";
+  head.innerHTML=`<div><h2 contenteditable="false"></h2><div class="key">${b.key} · ${b.floors.length} Etage${b.floors.length===1?"":"n"}</div></div>`;
+  const nm=document.createElement("input"); nm.value=b.name; nm.style.maxWidth="200px";
+  nm.setAttribute("aria-label","Gebäudename in Places");
+  nm.oninput=()=>{b.name=nm.value;};
+  const nmWrap=document.createElement("div"); nmWrap.style.minWidth="170px";
+  nmWrap.innerHTML='<label class="f">Gebäudename in Places</label>'; nmWrap.appendChild(nm);
+  head.querySelector("h2").textContent=b.name||b.key;
+  head.appendChild(nmWrap);
+  sec.appendChild(head);
+
+  /* Georeferenz */
+  const geo=document.createElement("div");
+  const pts=b.floors.flatMap(f=>f.spaces.filter(s=>!s.off).flatMap(s=>s.rings[0]));
+  const bb=pts.length?bbox(pts):[0,0,0,0];
+  geo.innerHTML=`<h3>Georeferenz</h3><p class="hint">Ein Punkt und ein Winkel genügen: der Plan liegt bereits in Metern. Nimm die ${anchorLabels[b.corner]} des Umrisses aus Google Maps. Vorsprünge wie ein Eingangsvordach zählen mit — sitzt der Plan danach verschoben, korrigierst du ihn mit dem Versatz.</p>`;
+  const gr=document.createElement("div"); gr.className="grid g2";
+  const mk=(lab,val,step,on,cls)=>{
+    const d=document.createElement("div");
+    d.innerHTML=`<label class="f">${lab}</label>`;
+    const i=document.createElement("input"); i.value=val; i.className=cls||"mono";
+    if(step){i.type="number";i.step=step;}
+    i.oninput=()=>on(i.value); d.appendChild(i); return d;
+  };
+  gr.appendChild(mk("Breitengrad","" + b.lat,"any",v=>{b.lat=v;updateGeoNote();}));
+  gr.appendChild(mk("Längengrad","" + b.lon,"any",v=>{b.lon=v;updateGeoNote();}));
+  gr.appendChild(mk("Drehung Plan-Nord (°)",b.rot,"0.05",v=>{b.rot=v;updateGeoNote();}));
+  gr.appendChild(mk("Versatz Ost (m)",b.dE,"0.1",v=>{b.dE=v;updateGeoNote();}));
+  gr.appendChild(mk("Versatz Nord (m)",b.dN,"0.1",v=>{b.dN=v;updateGeoNote();}));
+  const cd=document.createElement("div");
+  cd.innerHTML='<label class="f">Der Punkt ist die …</label>';
+  const cs=document.createElement("select");
+  for(const [k,v] of Object.entries(anchorLabels)){ const o=document.createElement("option"); o.value=k;o.textContent=v;if(k===b.corner)o.selected=true;cs.appendChild(o); }
+  cs.onchange=()=>{b.corner=cs.value; render();};
+  cd.appendChild(cs); gr.appendChild(cd);
+  geo.appendChild(gr);
+  const gnote=document.createElement("div"); gnote.className="note"; geo.appendChild(gnote);
+  sec.appendChild(geo);
+
+  function anchorPlan(){
+    const [x0,y0,x1,y1]=bb;
+    return {sw:[x0,y0],nw:[x0,y1],se:[x1,y0],ne:[x1,y1],c:[(x0+x1)/2,(y0+y1)/2]}[b.corner];
+  }
+  function toLL(p){
+    const th=(parseFloat(b.rot)||0)*Math.PI/180, A=anchorPlan();
+    const dx=p[0]-A[0], dy=p[1]-A[1];
+    const E=dx*Math.cos(th)+dy*Math.sin(th)+(parseFloat(b.dE)||0), N=-dx*Math.sin(th)+dy*Math.cos(th)+(parseFloat(b.dN)||0);
+    const lat=parseFloat(b.lat), lon=parseFloat(b.lon), R=6378137;
+    return [ +(lon+(E/(R*Math.cos(lat*Math.PI/180)))*180/Math.PI).toFixed(8),
+             +(lat+(N/R)*180/Math.PI).toFixed(8) ];
+  }
+  function updateGeoNote(){
+    const ok=isFinite(parseFloat(b.lat))&&isFinite(parseFloat(b.lon));
+    if(!ok){ gnote.className="note"; gnote.textContent="Ohne Koordinaten lässt sich kein Paket erzeugen — Places verlangt georeferenzierte Dateien."; return; }
+    const ne=toLL([bb[2],bb[3]]);
+    gnote.className="note ok";
+    gnote.innerHTML=`Gegenprobe: die Nordost-Ecke liegt damit bei <span class="mono">${ne[1]}, ${ne[0]}</span>. Ausdehnung ${(bb[2]-bb[0]).toFixed(1)} × ${(bb[3]-bb[1]).toFixed(1)} m.`;
+    exportBtn.disabled=false;
+  }
+
+  /* Etagenauswahl */
+  const tabs=document.createElement("div"); tabs.className="floortabs";
+  b.floors.forEach((f,i)=>{
+    const t=document.createElement("button");
+    t.textContent=`${f.shortDe} · ${f.ordinal}`;
+    t.setAttribute("aria-pressed", i===b.active);
+    t.onclick=()=>{b.active=i;render();};
+    tabs.appendChild(t);
+  });
+  sec.appendChild(tabs);
+
+  const fl=b.floors[b.active];
+  if(fl){
+    const meta=document.createElement("div"); meta.className="grid g3"; meta.style.marginBottom="12px";
+    meta.appendChild(mk("Etagenname",fl.nameDe,null,v=>{fl.nameDe=v;},"x"));
+    meta.appendChild(mk("Kurzname",fl.shortDe,null,v=>{fl.shortDe=v; render();},"x"));
+    meta.appendChild(mk("Ordinal (= SortOrder in Places)",fl.ordinal,"1",v=>{fl.ordinal=parseInt(v||0,10); render();}));
+    sec.appendChild(meta);
+
+    /* Palette */
+    const pal=document.createElement("div"); pal.className="palette";
+    const info=document.createElement("button"); info.className="sw"; info.innerHTML='<i style="background:transparent;border-style:dashed"></i>Nur ansehen';
+    info.setAttribute("aria-pressed", activePaint===null); info.onclick=()=>{activePaint=null;render();};
+    pal.appendChild(info);
+    for(const [k,v] of Object.entries(CATS)){
+      const s=document.createElement("button"); s.className="sw";
+      s.innerHTML=`<i style="background:${v.c}"></i>${v.de}`;
+      s.setAttribute("aria-pressed", activePaint===k);
+      s.onclick=()=>{activePaint=(activePaint===k?null:k);render();};
+      pal.appendChild(s);
+    }
+    const ex=document.createElement("button"); ex.className="sw";
+    ex.innerHTML='<i style="background:repeating-linear-gradient(45deg,#999,#999 2px,#fff 2px,#fff 4px)"></i>Nicht übernehmen';
+    ex.setAttribute("aria-pressed", activePaint==="__off");
+    ex.onclick=()=>{activePaint=(activePaint==="__off"?null:"__off");render();};
+    pal.appendChild(ex);
+    sec.appendChild(pal);
+    const ph=document.createElement("p"); ph.className="hint";
+    ph.textContent = activePaint ? "Klick auf eine Fläche im Plan setzt diese Einordnung." : "Wähle oben eine Einordnung, dann im Plan die Flächen anklicken.";
+    sec.appendChild(ph);
+
+    /* Plan */
+    const box=document.createElement("div"); box.className="planbox";
+    box.appendChild(planSvg(fl,b.trim));
+    sec.appendChild(box);
+
+    /* Zählung */
+    const tal=document.createElement("div"); tal.className="tally";
+    const cnt={};
+    for(const s of fl.spaces){ if(s.off) continue; cnt[s.cat]=(cnt[s.cat]||0)+1; }
+    tal.innerHTML=Object.entries(cnt).sort((a,c)=>c[1]-a[1])
+      .map(([k,n])=>`<span><b>${n}</b> ${CATS[k].de}</span>`).join("")
+      + `<span><b>${fl.spaces.filter(s=>s.off).length}</b> nicht übernommen</span>`;
+    sec.appendChild(tal);
+
+    /* Tabelle der benannten Räume */
+    const named=fl.spaces.filter(s=>s.num);
+    if(named.length){
+      const tw=document.createElement("div"); tw.className="tablewrap"; tw.style.marginTop="14px";
+      const tb=document.createElement("table");
+      tb.innerHTML="<thead><tr><th>Nummer</th><th>Beschriftung</th><th>m²</th><th>Einordnung</th></tr></thead>";
+      const body=document.createElement("tbody");
+      for(const s of named){
+        const tr=document.createElement("tr"); if(s.off) tr.className="off";
+        const num=b.trim?trimNum(s.num):s.num;
+        tr.innerHTML=`<td class="n">${num}</td><td>${s.alt||""}</td><td class="n">${s.area.toFixed(1)}</td>`;
+        const td=document.createElement("td");
+        const sel=document.createElement("select");
+        for(const [k,v] of Object.entries(CATS)){ const o=document.createElement("option");o.value=k;o.textContent=v.de;if(k===s.cat)o.selected=true;sel.appendChild(o); }
+        sel.onchange=()=>{s.cat=sel.value; s.off=false; render();};
+        td.appendChild(sel); tr.appendChild(td); body.appendChild(tr);
+      }
+      tb.appendChild(body); tw.appendChild(tb); sec.appendChild(tw);
+    }
+  }
+
+  /* Aktionen */
+  const act=document.createElement("div"); act.className="actions";
+  const chk=document.createElement("label"); chk.className="chk";
+  const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=b.trim;
+  cb.onchange=()=>{b.trim=cb.checked; render();};
+  chk.appendChild(cb); chk.append("Führende Null entfernen (00502 → 0502)");
+  act.appendChild(chk);
+  const exportBtn=document.createElement("button"); exportBtn.className="primary"; exportBtn.textContent="IMDF-Paket erzeugen";
+  exportBtn.disabled=true;
+  exportBtn.onclick=()=>doExport(b,toLL,exportBtn,msg);
+  act.appendChild(exportBtn);
+  sec.appendChild(act);
+  const msg=document.createElement("div"); msg.className="note"; msg.style.display="none"; sec.appendChild(msg);
+
+  updateGeoNote();
+  return sec;
+}
+
+function trimNum(n){ return (n && n.length>4 && n[0]==="0") ? n.slice(1) : n; }
+
+function planSvg(fl,trim){
+  const pts=fl.spaces.flatMap(s=>s.rings[0]);
+  const [x0,y0,x1,y1]=bbox(pts), pad=1;
+  const ns="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(ns,"svg");
+  svg.setAttribute("viewBox",`${x0-pad} ${-(y1+pad)} ${x1-x0+2*pad} ${y1-y0+2*pad}`);
+  const g=document.createElementNS(ns,"g");
+  g.setAttribute("transform","scale(1,-1)");
+  svg.appendChild(g);
+  for(const s of fl.spaces){
+    const poly=document.createElementNS(ns,"polygon");
+    poly.setAttribute("points", s.rings[0].map(p=>p.join(",")).join(" "));
+    poly.setAttribute("fill", s.off ? "transparent" : CATS[s.cat].c);
+    poly.setAttribute("fill-opacity", s.off ? "0" : "1");
+    if(s.off){ poly.setAttribute("stroke-dasharray",".3 .3"); }
+    poly.style.cursor="pointer";
+    poly.addEventListener("click",()=>{
+      if(activePaint==="__off") s.off=!s.off;
+      else if(activePaint){ s.cat=activePaint; s.off=false; }
+      else alert(`${s.num?s.num+" — ":""}${s.alt||CATS[s.cat].de}\n${s.area.toFixed(1)} m²${s.off?"\nwird nicht übernommen":""}`);
+      render();
+    });
+    g.appendChild(poly);
+    for(const h of s.rings.slice(1)){
+      const hp=document.createElementNS(ns,"polygon");
+      hp.setAttribute("points",h.map(p=>p.join(",")).join(" "));
+      hp.setAttribute("fill","var(--panel)"); hp.style.pointerEvents="none";
+      g.appendChild(hp);
+    }
+  }
+  const gt=document.createElementNS(ns,"g"); svg.appendChild(gt);
+  const fs=Math.max(.55,(x1-x0)/95);
+  for(const s of fl.spaces){
+    if(!s.num||s.off) continue;
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",s.ip[0]); t.setAttribute("y",-s.ip[1]+fs*0.36);
+    t.setAttribute("font-size",fs);
+    t.setAttribute("text-anchor","middle");
+    t.setAttribute("fill", ["conferenceroom","nonpublic","huddleroom"].includes(s.cat)?"#fff":"#15191c");
+    t.textContent=trim?trimNum(s.num):s.num;
+    gt.appendChild(t);
+  }
+  return svg;
+}
+
+/* ---------------------------------------------------------------- Export */
+async function doExport(b,toLL,btn,msg){
+  btn.disabled=true; const old=btn.textContent; btn.textContent="Erzeuge …";
+  msg.style.display="none";
+  try{
+    const geom=rings=>{
+      const out=[];
+      rings.forEach((r,k)=>{
+        let ring=dropCollinear(dedupe(r));
+        if((sArea(ring)>0)!==(k===0)) ring=ring.reverse();
+        const ll=ring.map(toLL); ll.push(ll[0]); out.push(ll);
+      });
+      return {type:"Polygon",coordinates:out};
+    };
+    const L=(de,en)=>de?{en:en||de,de}:null;
+    const bid=await uuid5(b.key+"/building");
+    const levels=[],units=[];
+    for(const fl of b.floors){
+      const lid=await uuid5(`${b.key}/${fl.code}/level`);
+      const ring=outlineOf([fl]);
+      if(!ring.length) throw new Error(`Für ${fl.shortDe} ließ sich kein Umriss bilden.`);
+      const c=centroid(ring);
+      levels.push({id:lid,type:"Feature",feature_type:"level",geometry:geom([ring]),
+        properties:{category:"unspecified",restriction:null,outdoor:false,ordinal:fl.ordinal,
+          name:L(fl.nameDe),short_name:L(fl.shortDe),
+          display_point:{type:"Point",coordinates:toLL(c)},
+          address_id:null,building_ids:[bid],bearing:parseFloat(b.rot)||0}});
+      for(const s of fl.spaces){
+        if(s.off) continue;
+        const num=s.num?(b.trim?trimNum(s.num):s.num):null;
+        const nm = num ? L(num) : (NAMED.has(s.cat)?L(CATS[s.cat].de,CATS[s.cat].en):null);
+        units.push({id:await uuid5(`${b.key}/${fl.code}/unit/${s.oid}`),type:"Feature",feature_type:"unit",
+          geometry:geom(s.rings),
+          properties:{category:s.cat,restriction:null,accessibility:null,
+            name:nm, alt_name:s.alt?L(s.alt):null,
+            display_point:{type:"Point",coordinates:toLL(s.ip)},level_id:lid}});
+      }
+    }
+    const fp=outlineOf(b.floors);
+    const pack={
+      building:{type:"FeatureCollection",name:"building",features:[{id:bid,type:"Feature",feature_type:"building",geometry:null,
+        properties:{category:"unspecified",restriction:null,name:L(b.name||b.key),alt_name:L(b.key),
+          display_point:{type:"Point",coordinates:toLL(centroid(fp))},address_id:null}}]},
+      footprint:{type:"FeatureCollection",name:"footprint",features:[{id:await uuid5(b.key+"/footprint"),
+        type:"Feature",feature_type:"footprint",geometry:geom([fp]),
+        properties:{category:"ground",name:null,building_ids:[bid]}}]},
+      level:{type:"FeatureCollection",name:"level",features:levels},
+      unit:{type:"FeatureCollection",name:"unit",features:units}
+    };
+    const blob=await makeZip(Object.entries(pack).map(([n,o])=>[n+".geojson", JSON.stringify(o,null,1)]));
+    const file=`${b.key.replace(/[^\w.-]/g,"_")}_IMDF.zip`;
+    await saveFile(file, blob);
+    msg.className="note ok"; msg.style.display="";
+    msg.textContent=`${file} gespeichert — ${b.floors.length} Etage${b.floors.length===1?"":"n"}, ${units.length} Räume.`;
+  }catch(e){
+    if(e && e.code==="declined"){ btn.disabled=false; btn.textContent=old; return; }
+    msg.className="note bad"; msg.style.display="";
+    msg.textContent=(e && (e.message||e.code)) || "Das Paket ließ sich nicht erzeugen.";
+  }
+  btn.disabled=false; btn.textContent=old;
+}
+
+/* ---------------------------------------------------------------- Ablage */
+const drop=$("#drop"), picker=$("#picker");
+drop.onclick=()=>picker.click();
+drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();picker.click();} };
+picker.onchange=()=>{ addFiles([...picker.files]); picker.value=""; };
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("hot");}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("hot");}));
+drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
+render();
+</script>
+</body>
+</html>
