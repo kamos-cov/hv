@@ -488,6 +488,66 @@ async function saveFile(name,blob){
   a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
 
+/* --------------------------------------------- Places-Export (Get-PlaceV3) */
+function parseCsv(text){
+  text=text.replace(/^\uFEFF/,"");
+  const first=(text.split(/\r?\n/)[0]||"");
+  const del=(first.split(";").length>first.split(",").length)?";":",";
+  const rows=[]; let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; }
+    else if(c==='"') q=true;
+    else if(c===del){ row.push(cell); cell=""; }
+    else if(c==="\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
+    else if(c!=="\r") cell+=c;
+  }
+  if(cell.length||row.length){ row.push(cell); rows.push(row); }
+  const head=rows.shift()||[];
+  return rows.filter(r=>r.length>1).map(r=>Object.fromEntries(head.map((h,i)=>[h.trim(),(r[i]||"").trim()])));
+}
+function roomNumberOf(text){
+  const runs=String(text).replace(/\([^)]*\)\s*$/,"").match(/\d+/g);
+  return runs&&runs.length ? parseInt(runs[runs.length-1],10) : null;
+}
+const sameRoom=(a,b)=> a!=null&&b!=null&&(a===b||a%1000===b%1000);
+
+function applyPlaces(b,text){
+  const rows=parseCsv(text);
+  const need=["PlaceId","DisplayName","Type"];
+  if(!rows.length||need.some(k=>!(k in rows[0])))
+    throw new Error("Im CSV fehlen die Spalten PlaceId, DisplayName und Type. Erwartet wird die Ausgabe von Get-PlaceV3.");
+  b.places=rows;
+  const blds=rows.filter(r=>r.Type==="Building");
+  b.pBuilding = b.pBuilding && blds.some(x=>x.PlaceId===b.pBuilding) ? b.pBuilding
+              : (blds.length?blds[0].PlaceId:null);
+  autoFloors(b);
+}
+const placeFloors=b=> !b.places||!b.pBuilding ? []
+  : b.places.filter(r=>r.Type==="Floor" && r.ParentId===b.pBuilding);
+function autoFloors(b){
+  const pf=placeFloors(b); b.pFloor={};
+  b.floors.forEach((fl,i)=>{
+    let hit=pf.find(r=>parseInt(r.DisplayName,10)===fl.ordinal && /^\s*-?\d+\s*$/.test(r.DisplayName));
+    if(!hit) hit=pf.find(r=>r.DisplayName===fl.shortDe||r.DisplayName===fl.nameDe);
+    if(hit) b.pFloor[i]=hit.PlaceId;
+  });
+}
+/* liefert Map unit-oid -> PlaceId fuer eine Etage */
+function roomHits(b,i){
+  const out={}; const fid=b.pFloor[i];
+  if(!b.places||!fid) return out;
+  const cand=b.places.filter(r=>(r.Type==="Room"||r.Type==="Workspace") && r.ParentId===fid)
+                     .map(r=>({r,n:roomNumberOf(r.DisplayName)}));
+  for(const s of b.floors[i].spaces){
+    if(s.off||!s.num) continue;
+    const n=parseInt(s.num,10); if(isNaN(n)) continue;
+    const m=cand.find(c=>sameRoom(c.n,n));
+    if(m) out[s.oid]=m.r.PlaceId;
+  }
+  return out;
+}
+
 /* ---------------------------------------------------------------- UUID v5 */
 const NS = [0x6f,0x1c,0x2b,0x1e,0x7a,0x0d,0x4c,0x55,0x9f,0x3e,0x4b,0x1d,0x2c,0x3a,0x5e,0x77];
 async function uuid5(name){
@@ -507,7 +567,8 @@ let activePaint=null;
 function buildingOf(key){
   if(!state.buildings.has(key))
     state.buildings.set(key,{key, name:key.split("-")[0]||key, floors:[],
-      lat:"", lon:"", rot:0, dE:0, dN:0, corner:"sw", trim:true, active:0, msg:null});
+      lat:"", lon:"", rot:0, dE:0, dN:0, corner:"sw", trim:true, active:0, msg:null,
+      places:null, pBuilding:null, pFloor:{}, pFile:null});
   return state.buildings.get(key);
 }
 
@@ -597,6 +658,49 @@ function buildingCard(b){
     gnote.className="note ok";
     gnote.innerHTML=`Gegenprobe: die Nordost-Ecke liegt damit bei <span class="mono">${ne[1]}, ${ne[0]}</span>. Ausdehnung ${(bb[2]-bb[0]).toFixed(1)} × ${(bb[3]-bb[1]).toFixed(1)} m.`;
     exportBtn.disabled=false;
+  }
+
+  /* Places-Verknuepfung */
+  const pv=document.createElement("div"); pv.style.marginTop="18px";
+  pv.innerHTML='<h3>Verknüpfung mit Places</h3><p class="hint">Ohne diesen Schritt fehlen die PlaceIds und der Import bricht ab mit „Place levels in the building should be created before ingesting map“. Lade den Export <span class="mono">Get-PlaceV3 -AncestorId &lt;BuildingPlaceId&gt; -ResultSize Unlimited | Export-Csv …</span> hier hoch.</p>';
+  const pin=document.createElement("input"); pin.type="file"; pin.accept=".csv,text/csv"; pin.style.maxWidth="330px";
+  pin.onchange=async()=>{
+    const f=pin.files[0]; if(!f) return;
+    try{ applyPlaces(b, await f.text()); b.pFile=f.name; }
+    catch(e){ alert(e.message); }
+    render();
+  };
+  pv.appendChild(pin);
+  sec.appendChild(pv);
+
+  if(b.places){
+    const blds=b.places.filter(r=>r.Type==="Building");
+    const bw=document.createElement("div"); bw.className="grid g2"; bw.style.margin="12px 0";
+    const bd=document.createElement("div"); bd.innerHTML='<label class="f">Gebäude in Places</label>';
+    const bs=document.createElement("select");
+    for(const r of blds){ const o=document.createElement("option"); o.value=r.PlaceId; o.textContent=r.DisplayName; if(r.PlaceId===b.pBuilding)o.selected=true; bs.appendChild(o); }
+    bs.onchange=()=>{ b.pBuilding=bs.value; autoFloors(b); render(); };
+    bd.appendChild(bs); bw.appendChild(bd);
+    const pf=placeFloors(b);
+    b.floors.forEach((fl,i)=>{
+      const d=document.createElement("div");
+      d.innerHTML=`<label class="f">${fl.shortDe} (Ordinal ${fl.ordinal}) →</label>`;
+      const sel=document.createElement("select");
+      const none=document.createElement("option"); none.value=""; none.textContent="— nicht verknüpft —"; sel.appendChild(none);
+      for(const r of pf){ const o=document.createElement("option"); o.value=r.PlaceId; o.textContent=r.DisplayName; if(r.PlaceId===b.pFloor[i])o.selected=true; sel.appendChild(o); }
+      sel.onchange=()=>{ if(sel.value) b.pFloor[i]=sel.value; else delete b.pFloor[i]; render(); };
+      d.appendChild(sel); bw.appendChild(d);
+    });
+    sec.appendChild(bw);
+    const rn=document.createElement("div"); rn.className="note";
+    const total=b.floors.reduce((n,_,i)=>n+Object.keys(roomHits(b,i)).length,0);
+    const nf=b.floors.filter((_,i)=>!b.pFloor[i]).length;
+    const missing=!b.pBuilding||nf>0;
+    rn.className="note"+(missing?" bad":" ok");
+    rn.textContent = missing
+      ? `Noch nicht verknüpft: ${!b.pBuilding?"Gebäude":""}${!b.pBuilding&&nf?" und ":""}${nf?nf+" Etage(n)":""}. Gebäude und alle Etagen müssen verknüpft sein.`
+      : `Gebäude und alle ${b.floors.length} Etagen verknüpft, dazu ${total} Räume.`;
+    sec.appendChild(rn);
   }
 
   /* Etagenauswahl */
@@ -755,9 +859,17 @@ async function doExport(b,toLL,btn,msg){
       return {type:"Polygon",coordinates:out};
     };
     const L=(de,en)=>de?{en:en||de,de}:null;
+    if(b.places){
+      if(!b.pBuilding) throw new Error("Das Gebäude ist nicht mit Places verknüpft.");
+      const off=b.floors.map((f,i)=>b.pFloor[i]?null:f.shortDe).filter(Boolean);
+      if(off.length) throw new Error("Nicht verknüpfte Etagen: "+off.join(", ")+". Places verlangt alle.");
+    }
     const bid=await uuid5(b.key+"/building");
     const levels=[],units=[];
-    for(const fl of b.floors){
+    let corr=0;
+    for(let fi=0; fi<b.floors.length; fi++){
+      const fl=b.floors[fi];
+      const hits=b.places?roomHits(b,fi):{};
       const lid=await uuid5(`${b.key}/${fl.code}/level`);
       const ring=outlineOf([fl]);
       if(!ring.length) throw new Error(`Für ${fl.shortDe} ließ sich kein Umriss bilden.`);
@@ -766,7 +878,8 @@ async function doExport(b,toLL,btn,msg){
         properties:{category:"unspecified",restriction:null,outdoor:false,ordinal:fl.ordinal,
           name:L(fl.nameDe),short_name:L(fl.shortDe),
           display_point:{type:"Point",coordinates:toLL(c)},
-          address_id:null,building_ids:[bid],bearing:parseFloat(b.rot)||0}});
+          address_id:null,building_ids:[bid],bearing:parseFloat(b.rot)||0,
+          ...(b.pFloor[fi]?{directory_id:b.pFloor[fi]}:{})}});
       for(const s of fl.spaces){
         if(s.off) continue;
         const num=s.num?(b.trim?trimNum(s.num):s.num):null;
@@ -775,14 +888,17 @@ async function doExport(b,toLL,btn,msg){
           geometry:geom(s.rings),
           properties:{category:s.cat,restriction:null,accessibility:null,
             name:nm, alt_name:s.alt?L(s.alt):null,
-            display_point:{type:"Point",coordinates:toLL(s.ip)},level_id:lid}});
+            display_point:{type:"Point",coordinates:toLL(s.ip)},level_id:lid,
+            ...(hits[s.oid]?{directory_id:hits[s.oid]}:{})}});
+        if(hits[s.oid]) corr++;
       }
     }
     const fp=outlineOf(b.floors);
     const pack={
       building:{type:"FeatureCollection",name:"building",features:[{id:bid,type:"Feature",feature_type:"building",geometry:null,
         properties:{category:"unspecified",restriction:null,name:L(b.name||b.key),alt_name:L(b.key),
-          display_point:{type:"Point",coordinates:toLL(centroid(fp))},address_id:null}}]},
+          display_point:{type:"Point",coordinates:toLL(centroid(fp))},address_id:null,
+          ...(b.pBuilding?{directory_id:b.pBuilding}:{})}}]},
       footprint:{type:"FeatureCollection",name:"footprint",features:[{id:await uuid5(b.key+"/footprint"),
         type:"Feature",feature_type:"footprint",geometry:geom([fp]),
         properties:{category:"ground",name:null,building_ids:[bid]}}]},
@@ -790,10 +906,12 @@ async function doExport(b,toLL,btn,msg){
       unit:{type:"FeatureCollection",name:"unit",features:units}
     };
     const blob=await makeZip(Object.entries(pack).map(([n,o])=>[n+".geojson", JSON.stringify(o,null,1)]));
-    const file=`${b.key.replace(/[^\w.-]/g,"_")}_IMDF.zip`;
+    const file=`${b.key.replace(/[^\w.-]/g,"_")}${b.places?"_imdf_correlated":"_IMDF"}.zip`;
     await saveFile(file, blob);
     msg.className="note ok"; msg.style.display="";
-    msg.textContent=`${file} gespeichert — ${b.floors.length} Etage${b.floors.length===1?"":"n"}, ${units.length} Räume.`;
+    msg.textContent=`${file} gespeichert — ${b.floors.length} Etage${b.floors.length===1?"":"n"}, ${units.length} Räume`
+      + (b.places?`, davon ${corr} mit Places verknüpft. Direkt mit New-Map hochladen.`
+                 :". Ohne Places-Verknüpfung — noch über Import-MapCorrelations korrelieren.");
   }catch(e){
     if(e && e.code==="declined"){ btn.disabled=false; btn.textContent=old; return; }
     msg.className="note bad"; msg.style.display="";
