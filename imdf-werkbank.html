@@ -122,7 +122,7 @@ tr.off td{opacity:.45}
     <span>oder klicken zum Auswählen — mehrere Etagen und mehrere Gebäude auf einmal</span>
   </div>
   <input type="file" id="picker" accept=".svg,image/svg+xml" multiple hidden>
-  <p class="hint" style="margin:12px 0 0">Der Dateiname liefert Gebäude und Etage, etwa <span class="mono">LEVK012-G101-OG05.svg</span>. Alles lässt sich danach überschreiben.</p>
+  <p class="hint" style="margin:12px 0 0">Zwei Formate werden gelesen: <b>Planon-Exporte</b> mit fertigen Raumflächen und <b>Visio-Exporte</b>, bei denen die Räume aus den Wänden abgeleitet werden. Der Dateiname liefert Gebäude und Etage, etwa <span class="mono">LEVK012-G101-OG05.svg</span> — alles lässt sich danach überschreiben.</p>
 </section>
 
 <div id="buildings"></div>
@@ -306,7 +306,7 @@ function parseSvg(text,fileName){
   const doc=new DOMParser().parseFromString(text,"image/svg+xml");
   if(doc.querySelector("parsererror")) throw new Error("Die Datei ließ sich nicht als SVG lesen.");
   const raw=[...doc.querySelectorAll('path')].filter(p=>(p.getAttribute('fmobjecttype')||"")==="Space");
-  if(!raw.length) throw new Error("Keine Raumflächen gefunden. Erwartet werden Pfade mit fmobjecttype=\"Space\" (Planon-Export).");
+  if(!raw.length) throw new Error("Weder Planon-Raumflächen noch Visio-Wände gefunden.");
 
   /* Beschriftungen: rect[ref-id="Space-<objectid>"] + Text im selben Knoten */
   const labels={};
@@ -378,6 +378,268 @@ function parseSvg(text,fileName){
   }
   const f=guessFloor(fileName);
   return {file:fileName, bld:f.bld, code:f.code, ordinal:f.ord, nameDe:f.de, shortDe:f.short, spaces};
+}
+
+/* ------------------------------------------------- Visio-SVG (Wände → Räume) */
+const VNS="http://schemas.microsoft.com/visio/2003/SVGExtensions/";
+
+function tfParse(t){
+  let M=[1,0,0,1,0,0];
+  if(!t) return M;
+  const mul=(A,B)=>[A[0]*B[0]+A[2]*B[1], A[1]*B[0]+A[3]*B[1],
+                    A[0]*B[2]+A[2]*B[3], A[1]*B[2]+A[3]*B[3],
+                    A[0]*B[4]+A[2]*B[5]+A[4], A[1]*B[4]+A[3]*B[5]+A[5]];
+  const re=/(matrix|translate|scale|rotate)\s*\(([^)]*)\)/g; let m;
+  while((m=re.exec(t))){
+    const n=(m[2].match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi)||[]).map(Number);
+    let T;
+    if(m[1]==="matrix") T=n.slice(0,6);
+    else if(m[1]==="translate") T=[1,0,0,1,n[0]||0,n[1]||0];
+    else if(m[1]==="scale") T=[n[0]||1,0,0,(n.length>1?n[1]:n[0])||1,0,0];
+    else{
+      const r=(n[0]||0)*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+      T=[c,s,-s,c,0,0];
+      if(n.length>2) T=mul([1,0,0,1,n[1],n[2]], mul(T,[1,0,0,1,-n[1],-n[2]]));
+    }
+    M=mul(M,T);
+  }
+  return M;
+}
+const tfApply=(M,p)=>[M[0]*p[0]+M[2]*p[1]+M[4], M[1]*p[0]+M[3]*p[1]+M[5]];
+const tfMul=(A,B)=>[A[0]*B[0]+A[2]*B[1], A[1]*B[0]+A[3]*B[1],
+                    A[0]*B[2]+A[2]*B[3], A[1]*B[2]+A[3]*B[3],
+                    A[0]*B[4]+A[2]*B[5]+A[4], A[1]*B[4]+A[3]*B[5]+A[5]];
+
+function isVisio(doc){
+  const r=doc.documentElement;
+  if(r && r.getAttribute("xmlns:v")===VNS) return true;
+  return !!doc.querySelector('[*|nameU="WallFill"], title');
+}
+
+/* sammelt Wandpolygone, Texte und Bemaßungen in Seitenkoordinaten */
+function visioCollect(doc){
+  const walls=[], texts=[], dims=[];
+  const titleOf=g=>{ const t=[...g.children].find(c=>c.localName==="title"); return t?t.textContent.trim():null; };
+  const udsOf=g=>{
+    const out={};
+    for(const ud of g.children){
+      if(ud.localName!=="userDefs") continue;
+      for(const u of ud.children) out[u.getAttribute("v:nameU")||u.getAttributeNS(VNS,"nameU")]=u.getAttribute("v:val")||u.getAttributeNS(VNS,"val");
+    }
+    return out;
+  };
+  const ringsFrom=(el,M)=>{
+    const out=[];
+    if(el.localName==="path"){
+      for(const sub of pathPoints(el.getAttribute("d")||"")){
+        if(sub.length>=3) out.push(sub.map(p=>tfApply(M,p)));
+      }
+    } else if(el.localName==="rect"){
+      const g=k=>parseFloat(el.getAttribute(k)||0);
+      const x=g("x"),y=g("y"),w=g("width"),h=g("height");
+      if(w>0&&h>0) out.push([[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(p=>tfApply(M,p)));
+    }
+    return out;
+  };
+  const walk=(el,M,inWall,inDim)=>{
+    for(const ch of el.children){
+      if(ch.localName==="g"){
+        const M2=tfMul(M, tfParse(ch.getAttribute("transform")));
+        const ti=titleOf(ch)||"";
+        const uds=udsOf(ch);
+        const w2 = inWall || /^(Wall|Curved wall)/i.test(ti);
+        const d2 = inDim  || /dimension/i.test(ti);
+        if(w2 && "WallFill" in uds){
+          for(const c of ch.children) for(const r of ringsFrom(c,M2)) walls.push(r);
+        }
+        if(d2 && !inDim){
+          const len=(uds.Length||"").match(/VT0\(([\d.]+)\)/);
+          const pts=[];
+          for(const c of ch.children) if(c.localName==="path")
+            for(const sub of pathPoints(c.getAttribute("d")||"")) for(const p of sub) pts.push(tfApply(M2,p));
+          if(len && pts.length>1){
+            let mx=0;
+            for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++)
+              mx=Math.max(mx, Math.hypot(pts[i][0]-pts[j][0], pts[i][1]-pts[j][1]));
+            const inch=parseFloat(len[1]);
+            if(inch>0 && mx>0) dims.push(mx/inch);
+          }
+        }
+        walk(ch,M2,w2,d2);
+      } else if(ch.localName==="text"){
+        const t=(ch.textContent||"").replace(/\s+/g," ").trim();
+        if(t){
+          const x=parseFloat(ch.getAttribute("x")||0), y=parseFloat(ch.getAttribute("y")||0);
+          texts.push({t, p:tfApply(M,[x,y])});
+        }
+      }
+    }
+  };
+  walk(doc.documentElement, [1,0,0,1,0,0], false, false);
+  return {walls, texts, dims};
+}
+
+/* Maßstab: Einheiten je Zoll, auf gängige Architekturmaßstäbe gerundet */
+const STD_UPI=[72/8,72/12,72/16,72/24,72/32,72/48,72/64,72/96,72/128,72/192,72/384];
+function visioScale(dims){
+  if(!dims.length) return null;
+  const s=dims.slice().sort((a,b)=>a-b);
+  const raw=s[Math.floor(s.length*0.15)];          // unteres Quantil: Maßhilfslinien verlängern
+  let best=STD_UPI[0], bd=1/0;
+  for(const c of STD_UPI){ const d=Math.abs(Math.log(raw/c)); if(d<bd){bd=d;best=c;} }
+  return (bd<0.12) ? best : raw;                   // nur snappen, wenn nah dran
+}
+
+/* Konturverfolgung nach Moore auf einem Label-Raster */
+function traceRing(lab,W,H,id){
+  let sx=-1,sy=-1;
+  for(let y=0;y<H&&sx<0;y++) for(let x=0;x<W;x++) if(lab[y*W+x]===id){sx=x;sy=y;break;}
+  if(sx<0) return [];
+  const on=(x,y)=> x>=0&&y>=0&&x<W&&y<H&&lab[y*W+x]===id;
+  const dirs=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+  const path=[]; let cx=sx,cy=sy,dir=6,guard=0;
+  do{
+    path.push([cx,cy]); let moved=false;
+    for(let k=0;k<8;k++){
+      const nd=(dir+6+k)%8, nx=cx+dirs[nd][0], ny=cy+dirs[nd][1];
+      if(on(nx,ny)){ cx=nx; cy=ny; dir=nd; moved=true; break; }
+    }
+    if(!moved) break;
+  } while((cx!==sx||cy!==sy) && guard++<300000);
+  return path;
+}
+
+/* Hauptfunktion: Visio-SVG -> Etagenobjekt wie beim Planon-Parser */
+function parseVisio(text,fileName,opts){
+  opts=opts||{};
+  const doc=new DOMParser().parseFromString(text,"image/svg+xml");
+  if(doc.querySelector("parsererror")) throw new Error("Die Datei ließ sich nicht als SVG lesen.");
+  const {walls,texts,dims}=visioCollect(doc);
+  if(!walls.length) throw new Error("Keine Wände gefunden. Erwartet wird ein Visio-SVG mit Wandshapes (WallFill).");
+
+  const upi = opts.upi || visioScale(dims);
+  if(!upi) throw new Error("Der Maßstab ließ sich nicht ermitteln. Bitte eine bekannte Länge angeben.");
+  const MPU = 0.0254/upi;                               // Meter je SVG-Einheit
+
+  /* Rasterisieren */
+  let x0=1/0,y0=1/0,x1=-1/0,y1=-1/0;
+  for(const r of walls) for(const p of r){
+    if(p[0]<x0)x0=p[0]; if(p[1]<y0)y0=p[1]; if(p[0]>x1)x1=p[0]; if(p[1]>y1)y1=p[1];
+  }
+  const pad=2*upi;                                       // 2 Zoll Rand
+  x0-=pad; y0-=pad; x1+=pad; y1+=pad;
+  const target=1500;
+  const S=Math.min(target/(x1-x0), target/(y1-y0), 4/upi*6);  // Pixel je Einheit
+  const W=Math.max(8,Math.ceil((x1-x0)*S)), H=Math.max(8,Math.ceil((y1-y0)*S));
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  const g=cv.getContext("2d",{willReadFrequently:true});
+  g.fillStyle="#000";
+  const gap=opts.gap!=null?opts.gap:6;                    // Türlücken bis n Zoll schließen
+  g.strokeStyle="#000"; g.lineWidth=Math.max(1,gap*upi*S); g.lineJoin="round"; g.lineCap="round";
+  for(const r of walls){
+    g.beginPath(); g.moveTo((r[0][0]-x0)*S,(r[0][1]-y0)*S);
+    for(let i=1;i<r.length;i++) g.lineTo((r[i][0]-x0)*S,(r[i][1]-y0)*S);
+    g.closePath(); g.fill(); g.stroke();
+  }
+  const d=g.getImageData(0,0,W,H).data;
+  const lab=new Int32Array(W*H).fill(0);
+  for(let i=0;i<W*H;i++) lab[i] = d[i*4+3]>60 ? -1 : 0;   // -1 = Wand
+
+  /* Flutfüllung der freien Flächen */
+  let next=1; const comps=[];
+  const st=new Int32Array(W*H);
+  for(let i=0;i<W*H;i++){
+    if(lab[i]!==0) continue;
+    const id=next++; let sp=0; st[sp++]=i; lab[i]=id;
+    let n=0, border=false, minx=W,miny=H,maxx=0,maxy=0;
+    while(sp){
+      const q=st[--sp]; n++;
+      const qx=q%W, qy=(q-qx)/W;
+      if(qx===0||qy===0||qx===W-1||qy===H-1) border=true;
+      if(qx<minx)minx=qx; if(qx>maxx)maxx=qx; if(qy<miny)miny=qy; if(qy>maxy)maxy=qy;
+      if(qx>0   && lab[q-1]===0){ lab[q-1]=id; st[sp++]=q-1; }
+      if(qx<W-1 && lab[q+1]===0){ lab[q+1]=id; st[sp++]=q+1; }
+      if(qy>0   && lab[q-W]===0){ lab[q-W]=id; st[sp++]=q-W; }
+      if(qy<H-1 && lab[q+W]===0){ lab[q+W]=id; st[sp++]=q+W; }
+    }
+    comps.push({id,n,border,bb:[minx,miny,maxx,maxy]});
+  }
+
+  /* Komponenten -> Räume */
+  const spaces=[];
+  const px2u = p => [x0+p[0]/S, y0+p[1]/S];
+  for(const c of comps){
+    if(c.border) continue;
+    const m2 = c.n/(S*S)*MPU*MPU;
+    if(m2 < (opts.minArea!=null?opts.minArea:1.2)) continue;
+    let ring=traceRing(lab,W,H,c.id);
+    if(ring.length<4) continue;
+    ring=rdp(ring.map(px2u).map(p=>[p[0]*MPU,p[1]*MPU]), (opts.simplify||0.06));
+    ring=dropCollinear(dedupe(ring));
+    if(ring.length<3) continue;
+    /* Innenpunkt: Pixel mit größtem Abstand zum Rand, grob über Rasterprobe */
+    let best=null,bd=-1;
+    const step=Math.max(1,Math.floor(Math.min(c.bb[2]-c.bb[0],c.bb[3]-c.bb[1])/14)||1);
+    for(let y=c.bb[1];y<=c.bb[3];y+=step) for(let x=c.bb[0];x<=c.bb[2];x+=step){
+      if(lab[y*W+x]!==c.id) continue;
+      let r=0; while(r<40){
+        const rr=r+1; let ok=true;
+        for(let a=0;a<8&&ok;a++){
+          const nx=Math.round(x+rr*Math.cos(a*Math.PI/4)), ny=Math.round(y+rr*Math.sin(a*Math.PI/4));
+          if(nx<0||ny<0||nx>=W||ny>=H||lab[ny*W+nx]!==c.id) ok=false;
+        }
+        if(!ok) break; r=rr;
+      }
+      if(r>bd){bd=r;best=[x,y];}
+    }
+    const ipU = best?px2u(best):null;
+    const ip = ipU?[ipU[0]*MPU, ipU[1]*MPU]:centroid(ring);
+    spaces.push({oid:"c"+c.id, rings:[ring], area:m2, ip, label:null, cat:"room", num:null, alt:null, off:false});
+  }
+
+  /* Texte zuordnen */
+  const isDim = t => /^[\s\d'"’′″\-\/]+$/.test(t) || /^\d+\s*U$/i.test(t);
+  const named=[];
+  for(const tx of texts){
+    if(isDim(tx.t)) continue;
+    const q=[tx.p[0]*MPU, tx.p[1]*MPU];
+    let hit=null;
+    for(const s of spaces) if(inside(q,s.rings[0])){ hit=s; break; }
+    named.push({t:tx.t, hit});
+    if(hit && !hit.num) hit.num=tx.t;
+    else if(hit && hit.num!==tx.t) hit.alt=(hit.alt?hit.alt+" / ":"")+tx.t;
+  }
+
+  /* Vorbelegung nach Namen */
+  for(const s of spaces){
+    const t=(s.num||"")+" "+(s.alt||"");
+    if(/conference|meeting|besprechung|board ?room/i.test(t)) s.cat="conferenceroom";
+    else if(/huddle/i.test(t)) s.cat="huddleroom";
+    else if(/office|b(ü|ue)ro/i.test(t)) s.cat="office";
+    else if(/rest ?room|toilet|wc|bath/i.test(t)) s.cat="restroom";
+    else if(/kitchen|lunch|break ?room|teek(ü|ue)che|pantry/i.test(t)) s.cat="kitchen";
+    else if(/lobby|reception|foyer|empfang/i.test(t)) s.cat="lobby";
+    else if(/stair|treppe/i.test(t)) s.cat="stairs";
+    else if(/elevator|lift|aufzug/i.test(t)) s.cat="elevator";
+    else if(/storage|closet|filing|file|lager|archiv/i.test(t)) s.cat="storage";
+    else if(/server|electrical|ups|technik|mechanical|breaker/i.test(t)) s.cat="serverroom";
+    else if(/corridor|hall|flur|walkway/i.test(t)) s.cat="walkway";
+    else if(!s.num && s.area<3) s.cat="nonpublic";
+    const wdt = 2*s.area/perim(s.rings[0]);
+    if(s.cat==="room" && !s.num && wdt<2.2 && s.area>15) s.cat="walkway";
+  }
+
+  /* Y spiegeln: Visio zeichnet nach unten, die Werkbank rechnet nach oben */
+  let ymax=-1/0;
+  for(const s of spaces) for(const r of s.rings) for(const p of r) if(p[1]>ymax) ymax=p[1];
+  for(const s of spaces){
+    s.rings=s.rings.map(r=>r.map(p=>[p[0], ymax-p[1]]).reverse());
+    s.ip=[s.ip[0], ymax-s.ip[1]];
+  }
+
+  const f=guessFloor(fileName);
+  return {file:fileName, bld:f.bld, code:f.code, ordinal:f.ord, nameDe:f.de, shortDe:f.short,
+          spaces, source:"visio", upi, unnamed:named.filter(n=>!n.hit).map(n=>n.t)};
 }
 
 /* -------------------------------------------------- Umriss über Rasterspur */
@@ -533,17 +795,39 @@ function autoFloors(b){
     if(hit) b.pFloor[i]=hit.PlaceId;
   });
 }
+/* Namensvergleich: Gross-/Kleinschreibung, Apostrophe und Fuellwoerter ignorieren */
+function normName(t){
+  return String(t).toLowerCase()
+    .replace(/[\u2018\u2019\u02bc\u0027`]/g,"")
+    .replace(/\([^)]*\)/g," ")
+    .replace(/[^a-z0-9\u00e4\u00f6\u00fc\u00df]+/g," ")
+    .replace(/\b(room|raum|the|der|die|das)\b/g," ")
+    .trim().replace(/\s+/g," ");
+}
 /* liefert Map unit-oid -> PlaceId fuer eine Etage */
 function roomHits(b,i){
-  const out={}; const fid=b.pFloor[i];
+  const out={}; const fid=b.pFloor[i]; const used=new Set();
   if(!b.places||!fid) return out;
   const cand=b.places.filter(r=>(r.Type==="Room"||r.Type==="Workspace") && r.ParentId===fid)
-                     .map(r=>({r,n:roomNumberOf(r.DisplayName)}));
+                     .map(r=>({r, n:roomNumberOf(r.DisplayName), k:normName(r.DisplayName)}));
+  const take=(s,m)=>{ out[s.oid]=m.r.PlaceId; used.add(m.r.PlaceId); };
+  /* 1. Durchgang: Raumnummer */
   for(const s of b.floors[i].spaces){
     if(s.off||!s.num) continue;
     const n=parseInt(s.num,10); if(isNaN(n)) continue;
-    const m=cand.find(c=>sameRoom(c.n,n));
-    if(m) out[s.oid]=m.r.PlaceId;
+    const m=cand.find(c=>!used.has(c.r.PlaceId) && sameRoom(c.n,n));
+    if(m) take(s,m);
+  }
+  /* 2. Durchgang: Name, exakt dann enthalten */
+  for(const s of b.floors[i].spaces){
+    if(s.off||!s.num||out[s.oid]) continue;
+    const k=normName(s.num); if(!k) continue;
+    const squash=x=>x.replace(/\s+/g,"");
+    let m=cand.find(c=>!used.has(c.r.PlaceId) && c.k===k);
+    if(!m) m=cand.find(c=>!used.has(c.r.PlaceId) && c.k && squash(c.k)===squash(k));
+    if(!m) m=cand.find(c=>!used.has(c.r.PlaceId) && c.k && squash(k).length>3 &&
+                           (squash(c.k).includes(squash(k))||squash(k).includes(squash(c.k))));
+    if(m) take(s,m);
   }
   return out;
 }
@@ -578,7 +862,10 @@ async function addFiles(list){
   for(const file of list){
     if(!/\.svg$/i.test(file.name)){ errs.push(`${file.name}: keine SVG-Datei`); continue; }
     try{
-      const fl=parseSvg(await file.text(), file.name);
+      const txt=await file.text();
+      const fl = /fmobjecttype\s*=\s*"Space"/.test(txt) ? parseSvg(txt, file.name)
+               : parseVisio(txt, file.name);
+      if(fl.source==="visio") fl.raw=txt;
       const b=buildingOf(fl.bld);
       const i=b.floors.findIndex(x=>x.file===fl.file);
       if(i>=0) b.floors[i]=fl; else b.floors.push(fl);
@@ -722,6 +1009,34 @@ function buildingCard(b){
     meta.appendChild(mk("Ordinal (= SortOrder in Places)",fl.ordinal,"1",v=>{fl.ordinal=parseInt(v||0,10); render();}));
     sec.appendChild(meta);
 
+    if(fl.source==="visio"){
+      const vs=document.createElement("div"); vs.className="note";
+      const den=Math.round(72/fl.upi);
+      vs.innerHTML='Aus Visio gelesen: Wände statt fertiger Raumflächen. Maßstab erkannt als '
+        + '<span class="mono">1:'+den+'</span> ('+(+fl.upi.toFixed(3))+' Einheiten je Zoll). '
+        + 'Stimmen die Flächenangaben in der Tabelle nicht, hier korrigieren:';
+      const row=document.createElement("div"); row.style.cssText="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap";
+      const lbl=document.createElement("span"); lbl.textContent="Maßstab 1:"; lbl.style.fontSize="13px";
+      const inp=document.createElement("input"); inp.type="number"; inp.step="1"; inp.min="1";
+      inp.value=den; inp.className="mono"; inp.style.maxWidth="110px";
+      const btn=document.createElement("button"); btn.textContent="Neu berechnen";
+      btn.onclick=()=>{
+        const n=parseFloat(inp.value); if(!(n>0)) return;
+        try{
+          const nf=parseVisio(fl.raw, fl.file, {upi:72/n});
+          nf.raw=fl.raw; nf.nameDe=fl.nameDe; nf.shortDe=fl.shortDe; nf.ordinal=fl.ordinal;
+          b.floors[b.active]=nf; autoFloors(b); render();
+        }catch(e){ alert(e.message); }
+      };
+      row.appendChild(lbl); row.appendChild(inp); row.appendChild(btn);
+      if(fl.unnamed && fl.unnamed.length){
+        const u=document.createElement("span"); u.style.cssText="font-size:13px;color:var(--ink-soft)";
+        u.textContent="Ohne Raum zugeordnet: "+fl.unnamed.join(", ");
+        row.appendChild(u);
+      }
+      vs.appendChild(row); sec.appendChild(vs);
+    }
+
     /* Palette */
     const pal=document.createElement("div"); pal.className="palette";
     const info=document.createElement("button"); info.className="sw"; info.innerHTML='<i style="background:transparent;border-style:dashed"></i>Nur ansehen';
@@ -838,7 +1153,8 @@ function planSvg(fl,trim){
     t.setAttribute("font-size",fs);
     t.setAttribute("text-anchor","middle");
     t.setAttribute("fill", ["conferenceroom","nonpublic","huddleroom"].includes(s.cat)?"#fff":"#15191c");
-    t.textContent=trim?trimNum(s.num):s.num;
+    const lbl=trim?trimNum(s.num):s.num;
+    t.textContent = lbl.length>14 ? lbl.slice(0,13)+"\u2026" : lbl;
     gt.appendChild(t);
   }
   return svg;
